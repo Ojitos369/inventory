@@ -5,9 +5,18 @@ import { CategoriaForm } from '../../Components/CategoriaForm';
 import style from './styles/index.module.scss';
 
 
-const Content = ({ grupoId, close }) => {
+// IMPORTANTE: el Component pasado a GeneralModal debe ser una referencia estable.
+// Si se redefine inline (e.g. (props) => <Content {...props} grupoId={grupoId} />),
+// cada re-render del padre crea una NUEVA funcion -> React desmonta+monta el Content
+// -> se pierde el state local (creando, editando). Por eso el componente se declara
+// aqui top-level y lee grupoId desde el store directamente.
+const Content = ({ close }) => {
     const { s, f } = useStates();
-    const categorias = useMemo(() => s.catalog?.categorias?.[grupoId] || [], [s.catalog?.categorias, grupoId]);
+    const grupoId = useMemo(() => s.app?.grupoActual, [s.app?.grupoActual]);
+    const categorias = useMemo(
+        () => s.catalog?.categorias?.[grupoId] || [],
+        [s.catalog?.categorias, grupoId],
+    );
     const [editando, setEditando] = useState(null);
     const [creando, setCreando] = useState(false);
 
@@ -79,12 +88,12 @@ const Content = ({ grupoId, close }) => {
 };
 
 
-export const CategoriasManagerModal = ({ grupoId }) => {
+export const CategoriasManagerModal = () => {
     return (
         <GeneralModal
             lvl1="catalog"
             lvl2="catsManager"
-            Component={(props) => <Content {...props} grupoId={grupoId} />}
+            Component={Content}
             title="Categorias del grupo"
             size="md"
         />

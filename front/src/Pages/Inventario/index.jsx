@@ -196,7 +196,7 @@ export const Inventario = () => {
 
             <MovimientoModal />
             <ArticuloFormModal />
-            <CategoriasManagerModal grupoId={grupoId} />
+            <CategoriasManagerModal />
         </div>
     );
 };
