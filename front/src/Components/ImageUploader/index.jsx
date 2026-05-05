@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useStates } from '../../Hooks/useStates';
+import { compressImage } from '../../Core/helper';
 import style from './styles/index.module.scss';
 
 
@@ -29,7 +30,12 @@ export const ImageUploader = ({ value, onChange, folder = 'articulos', label = '
         }
         setUploading(true);
         try {
-            const r = await f.general.uploadImage(file, folder);
+            // comprime antes de subir (target ~1.5MB, max lado 1600)
+            let comprimido = file;
+            try {
+                comprimido = await compressImage(file, { maxSide: 1600, quality: 0.82, targetBytes: 1.5 * 1024 * 1024 });
+            } catch (_) { /* manda original */ }
+            const r = await f.general.uploadImage(comprimido, folder);
             onChange?.(r.url);
         } catch (e) {
             setErr(e?.response?.data?.detail || 'Error al subir');

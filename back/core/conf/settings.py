@@ -53,6 +53,21 @@ kimi_settings = {
     'text_model': os.environ.get('KIMI_TEXT_MODEL', 'moonshot-v1-32k'),
 }
 
+# ----------------------   GEMINI (Google)   ----------------------
+gemini_settings = {
+    'api_key': os.environ.get('GEMINI_API_KEY', ''),
+    'api_base': os.environ.get('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/openai'),
+    'vision_model': os.environ.get('GEMINI_VISION_MODEL', 'gemini-2.5-flash'),
+    'text_model': os.environ.get('GEMINI_TEXT_MODEL', 'gemini-2.5-flash'),
+}
+
+# ----------------------   PROVIDER DEFAULTS   ----------------------
+# Sobrescritos en runtime por app_settings.provider.{vision,text}
+provider_defaults = {
+    'vision': os.environ.get('LLM_PROVIDER_VISION', 'kimi'),
+    'text': os.environ.get('LLM_PROVIDER_TEXT', 'kimi'),
+}
+
 # ----------------------   SESSION   ----------------------
 SESSION_COOKIE = "invhometka"
 

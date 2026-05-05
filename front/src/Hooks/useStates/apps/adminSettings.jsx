@@ -26,19 +26,19 @@ export const adminSettings = props => {
             }));
     };
 
-    const testKimi = (onOk) => {
-        return miAxios.post('admin/settings/test_kimi')
+    const test = (kind, onOk) => {
+        return miAxios.post('admin/settings/test', { kind })
             .then(res => {
                 onOk?.(res.data);
                 if (res.data.ok) {
                     general.notificacion({
-                        message: `Respuesta: ${res.data.respuesta || '(vacio)'}`,
-                        mode: 'success', title: 'Kimi responde',
+                        message: `Proveedor ${res.data.provider} OK · ${res.data.respuesta || '(vacio)'}`,
+                        mode: 'success', title: `${kind} responde`,
                     });
                 } else {
                     general.notificacion({
-                        message: res.data.error || 'Error',
-                        mode: 'danger', title: 'Kimi fallo',
+                        message: `Proveedor ${res.data.provider}: ${res.data.error || 'Error'}`,
+                        mode: 'danger', title: `${kind} fallo`,
                     });
                 }
                 return res.data;
@@ -48,5 +48,5 @@ export const adminSettings = props => {
             }));
     };
 
-    return { fetch, save, testKimi };
+    return { fetch, save, test };
 };

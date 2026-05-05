@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useStates } from '../../Hooks/useStates';
 import { showNumber, showDate, colorPorcentaje } from '../../Core/helper';
 import { MovimientoModal } from '../Inventario/MovimientoModal';
+import { ArticuloFormModal } from '../Inventario/ArticuloFormModal';
 import style from './styles/index.module.scss';
 
 export const ArticuloDetalle = () => {
@@ -18,6 +19,12 @@ export const ArticuloDetalle = () => {
         return () => f.u1('catalog', 'detalle', null);
     }, [id]);
 
+    // Si se edita el articulo desde el modal, refresca el detalle.
+    const formOpen = !!s.modals?.catalog?.formModal;
+    useEffect(() => {
+        if (!formOpen && id) f.catalog.getArticulo(id);
+    }, [formOpen]);
+
     if (!articulo) return <div className={style.page}><p style={{ color: 'var(--home-text-muted)' }}>Cargando…</p></div>;
 
     const pct = articulo.optimo > 0 ? Math.min(Number(articulo.cantidad) / Number(articulo.optimo) * 100, 999) : null;
@@ -28,6 +35,11 @@ export const ArticuloDetalle = () => {
         f.u2('modals', 'catalog', 'movModal', true);
     };
 
+    const editar = () => {
+        f.u1('catalog', 'editArticulo', articulo);
+        f.u2('modals', 'catalog', 'formModal', true);
+    };
+
     const eliminar = () => {
         if (!confirm(`Eliminar "${articulo.nombre}"?`)) return;
         f.catalog.removeArticulo(articulo.grupo_id, articulo.id);
@@ -36,18 +48,19 @@ export const ArticuloDetalle = () => {
 
     return (
         <div className={style.page}>
-            <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)} style={{ alignSelf: 'flex-start' }}>← Volver</button>
+            <div className={style.topbar}>
+                <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>← Volver</button>
+                <button type="button" className="btn btn-primary" onClick={editar}>✏️ Editar</button>
+            </div>
             <div className={style.head}>
                 {articulo.foto_url && (
-                    <img
-                        src={f.general.mediaUrl(articulo.foto_url)}
-                        alt=""
-                        style={{
-                            width: '100%', maxHeight: 280, objectFit: 'cover',
-                            borderRadius: 'var(--home-r-lg)',
-                            marginBottom: 8,
-                        }}
-                    />
+                    <div className={style.fotoWrap}>
+                        <img
+                            src={f.general.mediaUrl(articulo.foto_url)}
+                            alt=""
+                            className={style.foto}
+                        />
+                    </div>
                 )}
                 <h2>{articulo.nombre}</h2>
                 <span className={style.meta}>
@@ -62,7 +75,8 @@ export const ArticuloDetalle = () => {
                         <span style={{ fontSize: '1rem', color: 'var(--home-text-muted)', marginLeft: 6 }}>{articulo.unidad}</span>
                     </div>
                     <div className={style.opt}>
-                        Optimo: {showNumber(articulo.optimo, 2)} · Minimo: {showNumber(articulo.minimo, 2)}
+                        Optimo: {articulo.optimo > 0 ? showNumber(articulo.optimo, 2) : <em>sin definir</em>} ·{' '}
+                        Minimo: {articulo.minimo > 0 ? showNumber(articulo.minimo, 2) : <em>sin definir</em>}
                         {pct != null && <> · {pct.toFixed(0)}%</>}
                     </div>
                 </div>
@@ -73,10 +87,25 @@ export const ArticuloDetalle = () => {
                 </div>
             </div>
 
+            {/* Datos rapidos */}
+            <div className={style.dataGrid}>
+                <DataField label="Unidad" value={articulo.unidad || '—'} />
+                <DataField label="SKU" value={articulo.sku || '—'} />
+                <DataField label="Optimo" value={articulo.optimo > 0 ? `${showNumber(articulo.optimo, 2)} ${articulo.unidad}` : '—'} />
+                <DataField label="Mínimo" value={articulo.minimo > 0 ? `${showNumber(articulo.minimo, 2)} ${articulo.unidad}` : '—'} />
+            </div>
+
             {articulo.descripcion && (
                 <div className="card" style={{ padding: 16 }}>
                     <h3 style={{ fontSize: '1rem', marginBottom: 6, fontFamily: 'var(--home-font-display)' }}>Descripcion</h3>
                     <p style={{ color: 'var(--home-text-soft)' }}>{articulo.descripcion}</p>
+                </div>
+            )}
+
+            {articulo.notas && (
+                <div className="card" style={{ padding: 16 }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: 6, fontFamily: 'var(--home-font-display)' }}>Notas</h3>
+                    <p style={{ color: 'var(--home-text-soft)' }}>{articulo.notas}</p>
                 </div>
             )}
 
@@ -103,6 +132,21 @@ export const ArticuloDetalle = () => {
             <button type="button" className="btn btn-danger" onClick={eliminar}>Eliminar articulo</button>
 
             <MovimientoModal />
+            <ArticuloFormModal />
         </div>
     );
 };
+
+const DataField = ({ label, value }) => (
+    <div style={{
+        background: 'var(--home-bg-3)',
+        borderRadius: 'var(--home-r-md)',
+        padding: '8px 12px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+    }}>
+        <span style={{ fontSize: '0.66rem', color: 'var(--home-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+        <span style={{ fontWeight: 700, fontSize: '0.92rem', fontFamily: 'var(--home-font-display)' }}>{value}</span>
+    </div>
+);

@@ -6,7 +6,7 @@ from fastapi import UploadFile, File, Form
 
 from core.bases.apis import SessionApi
 from core.conf.settings import UPLOADS_DIR
-from core.utils import kimi
+from core.utils import llm
 
 
 def _ensure_uploads_dir():
@@ -44,9 +44,9 @@ class AnalyzePhoto(SessionApi):
             f.write(img_bytes)
 
         try:
-            items = kimi.vision_inventario(img_bytes, hint=hint)
+            items = llm.vision_inventario(img_bytes, hint=hint)
         except Exception as e:
-            self.send_me_error(f"Kimi vision: {e}")
+            print(f"Kimi vision: {e}")
             raise self.MYE(f"Error analizando imagen: {e}")
 
         # Match contra existentes para autovincular
@@ -83,13 +83,17 @@ class AnalyzePhoto(SessionApi):
 
 
 class AplicarCaptura(SessionApi):
-    """Aplica items finales corregidos a articulos. modo: reemplazar | agregar."""
+    """Aplica items finales corregidos a articulos.
+
+    Cada item lleva su propio `modo` (`reemplazar | agregar | ignorar`). Si no trae modo,
+    cae al `modo` global (compatibilidad). `ignorar` salta el item sin crear movimiento.
+    """
 
     def main(self):
         cap_id = self.data.get('captura_id')
-        modo = self.data.get('modo') or 'reemplazar'
+        modo_default = self.data.get('modo') or 'reemplazar'
         items = self.data.get('items') or []
-        if modo not in ('reemplazar', 'agregar'):
+        if modo_default not in ('reemplazar', 'agregar', 'ignorar'):
             raise self.MYE("modo invalido")
         if not cap_id or not isinstance(items, list):
             raise self.MYE("captura_id y items requeridos")
@@ -105,16 +109,25 @@ class AplicarCaptura(SessionApi):
         gid = cap[0]['grupo_id']
         self.require_grupo_member(gid)
 
-        resumen = {"creados": 0, "actualizados": 0, "movimientos": 0}
+        resumen = {"creados": 0, "actualizados": 0, "movimientos": 0, "ignorados": 0}
         for it in items:
             nombre = (it.get('objeto') or it.get('nombre') or '').strip().lower()
             if not nombre:
+                continue
+            modo_item = (it.get('modo') or modo_default)
+            if modo_item not in ('reemplazar', 'agregar', 'ignorar'):
+                modo_item = modo_default
+            if modo_item == 'ignorar':
+                resumen['ignorados'] += 1
                 continue
             try:
                 cant = float(it.get('cantidad') or 0)
             except Exception:
                 cant = 0
-            if cant <= 0:
+            if cant < 0:
+                continue
+            # cant == 0 con modo reemplazar deja en cero (valido); con agregar es no-op
+            if modo_item == 'agregar' and cant == 0:
                 continue
             unidad = (it.get('unidad') or 'pz').strip().lower() or 'pz'
             cat_id = it.get('categoria_id') or None
@@ -128,7 +141,7 @@ class AplicarCaptura(SessionApi):
             if existing:
                 aid = existing[0]['id']
                 actual = float(existing[0]['cantidad'] or 0)
-                if modo == 'reemplazar':
+                if modo_item == 'reemplazar':
                     nueva = cant
                     tipo = 'reajustar'
                 else:
@@ -157,7 +170,7 @@ class AplicarCaptura(SessionApi):
             """, {
                 'id': self.get_id(), 'aid': aid, 'gid': gid, 'uid': self.usuario['id'],
                 't': tipo, 'c': cant, 'ca': actual, 'cp': nueva,
-                'cap': cap_id, 'cm': f'Captura foto ({modo})',
+                'cap': cap_id, 'cm': f'Captura foto ({modo_item})',
             })
             resumen['movimientos'] += 1
 
@@ -165,7 +178,7 @@ class AplicarCaptura(SessionApi):
             UPDATE vision_capturas SET items_finales = CAST(:i AS JSONB),
                 modo_aplicacion = :m, aplicada = TRUE, aplicada_at = CURRENT_TIMESTAMP
             WHERE id = :id
-        """, {'i': json.dumps(items, ensure_ascii=False), 'm': modo, 'id': cap_id})
+        """, {'i': json.dumps(items, ensure_ascii=False), 'm': 'mixto', 'id': cap_id})
 
         self.response = {"resumen": resumen, "message": "Captura aplicada"}
 

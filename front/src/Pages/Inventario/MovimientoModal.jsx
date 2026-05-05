@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStates } from '../../Hooks/useStates';
 import { GeneralModal } from '../../Components/Modals/GeneralModal';
 import { showNumber } from '../../Core/helper';
@@ -7,8 +7,16 @@ const Content = ({ close }) => {
     const { s, f } = useStates();
     const articulo = s.catalog?.movArticulo;
     const tipo = s.catalog?.movTipo || 'agregar';
-    const [cantidad, setCantidad] = useState('1');
+    const [cantidad, setCantidad] = useState(() => {
+        const sug = articulo?.cantidadSugerida;
+        return sug != null && Number(sug) > 0 ? String(sug) : '1';
+    });
     const [comentario, setComentario] = useState('');
+
+    useEffect(() => {
+        const sug = articulo?.cantidadSugerida;
+        if (sug != null && Number(sug) > 0) setCantidad(String(sug));
+    }, [articulo?.id, articulo?.cantidadSugerida]);
 
     if (!articulo) return null;
 
@@ -18,7 +26,12 @@ const Content = ({ close }) => {
         if (isNaN(num) || num < 0) return;
         f.catalog.movimiento(
             { articulo_id: articulo.id, tipo, cantidad: num, comentario },
-            () => { close?.(); f.catalog.listArticulos({ grupo_id: articulo.grupo_id }); },
+            () => {
+                close?.();
+                f.catalog.listArticulos({ grupo_id: articulo.grupo_id });
+                // refresca lista de compras tambien (si la vista esta abierta usa el dato)
+                f.catalog.listShopping({ grupo_id: articulo.grupo_id, solo_faltantes: '1' });
+            },
         );
     };
 

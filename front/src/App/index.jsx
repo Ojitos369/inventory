@@ -7,6 +7,7 @@ import { Dashboard as DashboardPage } from '../Pages/Dashboard';
 import { Inventario as InventarioPage } from '../Pages/Inventario';
 import { ArticuloDetalle as ArticuloDetallePage } from '../Pages/ArticuloDetalle';
 import { ConteoFoto as ConteoFotoPage } from '../Pages/ConteoFoto';
+import { ListaCompras as ListaComprasPage } from '../Pages/ListaCompras';
 import { Perfil as PerfilPage } from '../Pages/Perfil';
 import { AdminUsers as AdminUsersPage } from '../Pages/Admin/Users';
 import { AdminGroups as AdminGroupsPage } from '../Pages/Admin/Groups';
@@ -57,6 +58,7 @@ function AppUI() {
                     <Route path="inventario" element={<InventarioPage />} />
                     <Route path="articulo/:id" element={<ArticuloDetallePage />} />
                     <Route path="conteo" element={<ConteoFotoPage />} />
+                    <Route path="lista" element={<ListaComprasPage />} />
                     <Route path="perfil" element={<PerfilPage />} />
                     {isAdmin && (
                         <>

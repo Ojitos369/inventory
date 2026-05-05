@@ -6,6 +6,18 @@ import { ArticuloFormModal } from './ArticuloFormModal';
 import { CategoriasManagerModal } from './CategoriasManagerModal';
 import { MenuBar } from '../../Components/MenuBar';
 
+
+const datosFaltantes = (a) => {
+    const f = [];
+    if (!a.optimo || Number(a.optimo) <= 0) f.push('óptimo');
+    if (!a.minimo || Number(a.minimo) <= 0) f.push('mínimo');
+    if (!a.foto_url) f.push('foto');
+    if (!a.categoria_id) f.push('categoría');
+    if (!a.descripcion) f.push('descripción');
+    return f;
+};
+
+
 export const Inventario = () => {
     const lc = useLocalStates();
     const { style, grupoId, articulos, categorias, q, setQ, cat, setCat, bajos, setBajos, f, loading } = lc;
@@ -36,6 +48,13 @@ export const Inventario = () => {
     };
 
     const abrirCategorias = () => f.u2('modals', 'catalog', 'catsManager', true);
+
+    // Click en cualquier zona neutra de la card navega al detalle.
+    const cardClick = (a, e) => {
+        // si el target esta dentro de un boton / link, no navega
+        if (e.target.closest('button, a, [role="menu"], select, input')) return;
+        navigate(`/articulo/${a.id}`);
+    };
 
     return (
         <div className={style.page}>
@@ -79,38 +98,61 @@ export const Inventario = () => {
                 {articulos.map(a => {
                     const pct = a.optimo > 0 ? Math.min(Number(a.cantidad) / Number(a.optimo) * 100, 999) : null;
                     const fillW = pct == null ? 0 : Math.min(pct, 100);
+                    const faltantes = datosFaltantes(a);
+                    const tieneTodos = faltantes.length === 0;
                     return (
-                        <div key={a.id} className={style.itemCard}>
-                            <div className="row1" onClick={() => navigate(`/articulo/${a.id}`)}>
-                                {a.foto_url && (
+                        <div
+                            key={a.id}
+                            className={`${style.itemCard} ${!tieneTodos ? style.incompleta : ''}`}
+                            onClick={(e) => cardClick(a, e)}
+                            role="button"
+                        >
+                            <div className="row1">
+                                {a.foto_url ? (
                                     <img
                                         src={f.general.mediaUrl(a.foto_url)}
                                         alt=""
                                         className="thumb"
                                     />
+                                ) : (
+                                    <div className="thumb noPhoto">📦</div>
                                 )}
                                 <div className="row1info">
                                     <div className="nombre">{a.nombre}</div>
-                                    {a.descripcion && (
-                                        <div style={{ fontSize: '0.78rem', color: 'var(--home-text-muted)', marginTop: 2 }}>
-                                            {a.descripcion}
-                                        </div>
+                                    {a.descripcion ? (
+                                        <div className="desc">{a.descripcion}</div>
+                                    ) : (
+                                        <div className="descMissing">sin descripción</div>
                                     )}
                                 </div>
-                                {a.categoria_nombre && (
+                                {a.categoria_nombre ? (
                                     <span className="cat" style={a.categoria_color ? { background: a.categoria_color + '22', color: a.categoria_color } : {}}>
-                                        {a.categoria_nombre}
+                                        {a.categoria_icono ? `${a.categoria_icono} ` : ''}{a.categoria_nombre}
                                     </span>
+                                ) : (
+                                    <span className="cat catMissing">sin categoría</span>
                                 )}
                             </div>
+
+                            {!tieneTodos && false && (
+                                <div
+                                    className="warning"
+                                    onClick={(e) => { e.stopPropagation(); abrirEditar(a); }}
+                                    title="Toca para completar"
+                                >
+                                    {/* ⚠️ Faltan: {faltantes.join(', ')} */}
+                                    ⚠️ Faltan Datos
+                                </div>
+                            )}
+
                             <div className="row2">
                                 <div>
                                     <div className="cantidad" style={{ color: colorPorcentaje(pct) }}>
                                         {showNumber(a.cantidad, 2)}
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--home-text-muted)', marginLeft: 4 }}>{a.unidad}</span>
+                                        <span className="unit">{a.unidad}</span>
                                     </div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--home-text-muted)' }}>
-                                        Optimo: {showNumber(a.optimo, 2)}
+                                    <div className="opt">
+                                        Optimo: {a.optimo > 0 ? showNumber(a.optimo, 2) : <em>sin definir</em>}
                                     </div>
                                 </div>
                                 <div className="actions">
@@ -139,9 +181,12 @@ export const Inventario = () => {
                                     </MenuBar>
                                 </div>
                             </div>
-                            <div className="progress">
-                                <div className="fill" style={{ width: `${fillW}%`, background: colorPorcentaje(pct) }}></div>
-                            </div>
+
+                            {pct != null && (
+                                <div className="progress">
+                                    <div className="fill" style={{ width: `${fillW}%`, background: colorPorcentaje(pct) }}></div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}

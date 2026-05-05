@@ -1,6 +1,6 @@
 from decimal import Decimal
 from core.bases.apis import SessionApi
-from core.utils import kimi
+from core.utils import llm
 
 
 # ===================== CATEGORIAS =====================
@@ -23,7 +23,7 @@ class SaveCategoria(SessionApi):
         gid = self.data.get('grupo_id')
         if not gid:
             raise self.MYE("grupo_id requerido")
-        self.require_grupo_member(gid, admin_only=True)
+        self.require_grupo_member(gid)
         nombre = (self.data.get('nombre') or '').strip()
         if not nombre:
             raise self.MYE("Nombre requerido")
@@ -53,7 +53,7 @@ class DeleteCategoria(SessionApi):
         cat_id = self.data.get('id')
         if not gid or not cat_id:
             raise self.MYE("grupo_id e id requeridos")
-        self.require_grupo_member(gid, admin_only=True)
+        self.require_grupo_member(gid)
         self.conexion.ejecutar(
             "DELETE FROM categorias WHERE id = :id AND grupo_id = :gid",
             {'id': cat_id, 'gid': gid},
@@ -194,7 +194,7 @@ class DeleteArticulo(SessionApi):
         ))
         if not rs:
             raise self.MYE("Articulo no encontrado")
-        self.require_grupo_member(rs[0]['grupo_id'], admin_only=True)
+        self.require_grupo_member(rs[0]['grupo_id'])
         self.conexion.ejecutar("UPDATE articulos SET activo = FALSE WHERE id = :id", {'id': aid})
         self.response = {"message": "Articulo eliminado"}
 
@@ -276,7 +276,7 @@ class Suggest(SessionApi):
         ai = {"sugerencias": [], "categoria_sugerida": None, "similares": []}
         if q and len(q) >= 2:
             try:
-                ai = kimi.sugerencias_articulo(q, existentes, categorias)
+                ai = llm.sugerencias_articulo(q, existentes, categorias)
             except Exception as e:
                 self.send_me_error(f"Suggest IA: {e}")
         self.response = {
@@ -296,8 +296,107 @@ class AgruparSimilares(SessionApi):
             {'gid': gid},
         ))]
         try:
-            grupos = kimi.agrupar_similares(items)
+            grupos = llm.agrupar_similares(items)
         except Exception as e:
             self.send_me_error(f"Agrupar IA: {e}")
             grupos = [[i] for i in items]
         self.response = {"grupos": grupos}
+
+
+# ===================== LISTA DE COMPRAS =====================
+class ListaCompras(SessionApi):
+    """Lista de compras: TODOS los articulos activos, ordenados por % gastado desc.
+
+    Cuando un articulo NO tiene `optimo` (NULL o 0), aplica defaults:
+      - `optimo_efectivo = GREATEST(cantidad, 1)` (asi siempre hay un techo razonable)
+      - `minimo_efectivo = COALESCE(minimo, 1)`
+      - `datos_faltantes = TRUE` para marcar al usuario que complete los datos
+
+    Calcula:
+      - `pct_stock` = cantidad / optimo_efectivo * 100  (cap 999)
+      - `pct_gastado` = 100 - LEAST(pct_stock, 100)
+      - `faltante`   = MAX(optimo_efectivo - cantidad, 0)
+
+    Filtros (query params):
+      - `categoria_id`
+      - `min_pct` (default 0): mostrar % gastado >= N
+      - `max_pct` (default 100)
+      - `solo_faltantes=1`: solo cuando faltante > 0
+      - `incluir_sin_datos=0|1` (default 1): si 0, oculta items con `datos_faltantes`
+    """
+    def main(self):
+        gid = self.data.get('grupo_id')
+        if not gid:
+            raise self.MYE("grupo_id requerido")
+        self.require_grupo_member(gid)
+
+        cat = self.data.get('categoria_id') or None
+        try:
+            min_pct = float(self.data.get('min_pct') or 0)
+        except Exception:
+            min_pct = 0
+        try:
+            max_pct = float(self.data.get('max_pct') or 100)
+        except Exception:
+            max_pct = 100
+        solo_faltantes = str(self.data.get('solo_faltantes') or '').lower() in ('1', 'true', 'yes')
+        incluir_sin_datos = str(self.data.get('incluir_sin_datos') or '1').lower() in ('1', 'true', 'yes')
+
+        params = {'gid': gid}
+        # CTE con valores efectivos (defaults cuando faltan datos)
+        sql = """
+            WITH base AS (
+                SELECT a.id, a.nombre, a.descripcion, a.cantidad, a.optimo, a.minimo, a.unidad,
+                       a.foto_url, a.categoria_id,
+                       c.nombre AS categoria_nombre, c.color AS categoria_color, c.icono AS categoria_icono,
+                       (a.optimo IS NULL OR a.optimo = 0 OR a.minimo IS NULL OR a.minimo = 0) AS datos_faltantes,
+                       GREATEST(COALESCE(NULLIF(a.optimo, 0), GREATEST(a.cantidad, 1)), 1) AS optimo_efectivo,
+                       COALESCE(NULLIF(a.minimo, 0), 1) AS minimo_efectivo
+                FROM articulos a
+                LEFT JOIN categorias c ON c.id = a.categoria_id
+                WHERE a.grupo_id = :gid AND a.activo = TRUE
+            )
+            SELECT id, nombre, descripcion, cantidad, optimo, minimo, unidad, foto_url,
+                   categoria_id, categoria_nombre, categoria_color, categoria_icono,
+                   datos_faltantes, optimo_efectivo, minimo_efectivo,
+                   ROUND(LEAST((cantidad / optimo_efectivo) * 100, 999), 1) AS pct_stock,
+                   ROUND(GREATEST(100 - LEAST((cantidad / optimo_efectivo) * 100, 100), 0), 1) AS pct_gastado,
+                   GREATEST(optimo_efectivo - cantidad, 0) AS faltante
+            FROM base
+            WHERE 1 = 1
+        """
+        if cat:
+            sql += " AND categoria_id = :cat"
+            params['cat'] = cat
+        if not incluir_sin_datos:
+            sql += " AND datos_faltantes = FALSE"
+        if solo_faltantes:
+            sql += " AND cantidad < optimo_efectivo"
+        if min_pct > 0:
+            sql += " AND (100 - LEAST((cantidad / optimo_efectivo) * 100, 100)) >= :minp"
+            params['minp'] = min_pct
+        if max_pct < 100:
+            sql += " AND (100 - LEAST((cantidad / optimo_efectivo) * 100, 100)) <= :maxp"
+            params['maxp'] = max_pct
+        # ordenar primero por gastado desc, despues los con datos faltantes al final
+        sql += " ORDER BY datos_faltantes ASC, pct_gastado DESC NULLS LAST, nombre"
+
+        rs = self.d2d(self.conexion.consulta_asociativa(sql, params))
+        for r in rs:
+            try:
+                pg = float(r.get('pct_gastado') or 0)
+            except Exception:
+                pg = 0
+            if r.get('datos_faltantes'):
+                # severidad ligera cuando no hay datos: solo refleja gastado real
+                if pg >= 90: r['severidad'] = 'critico'
+                elif pg >= 70: r['severidad'] = 'alto'
+                elif pg >= 50: r['severidad'] = 'medio'
+                else: r['severidad'] = 'sin_datos'
+            else:
+                if pg >= 90: r['severidad'] = 'critico'
+                elif pg >= 70: r['severidad'] = 'alto'
+                elif pg >= 50: r['severidad'] = 'medio'
+                elif pg >= 30: r['severidad'] = 'bajo'
+                else: r['severidad'] = 'ok'
+        self.response = {"items": rs, "total": len(rs)}

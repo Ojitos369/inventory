@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from .api import (
     ListCategorias, SaveCategoria, DeleteCategoria,
     ListArticulos, GetArticulo, SaveArticulo, DeleteArticulo,
-    RegistrarMovimiento, Suggest, AgruparSimilares,
+    RegistrarMovimiento, Suggest, AgruparSimilares, ListaCompras,
 )
 
 router = APIRouter()
@@ -66,3 +66,8 @@ async def suggest(request: Request):
 @router.get("/agrupar")
 async def agrupar(request: Request):
     return await AgruparSimilares(request=request).run()
+
+
+@router.get("/shopping")
+async def shopping(request: Request):
+    return await ListaCompras(request=request).run()

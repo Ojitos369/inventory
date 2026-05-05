@@ -58,7 +58,8 @@ def _client(timeout: float = 90.0) -> httpx.Client:
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    return httpx.Client(base_url=base, headers=headers, timeout=timeout)
+    r = httpx.Client(base_url=base, headers=headers, timeout=timeout)
+    return r
 
 
 def _model(name: str) -> str:
@@ -79,13 +80,13 @@ def _detect_mime(image_bytes: bytes) -> str:
 
 
 def chat(messages: List[Dict[str, Any]], model: Optional[str] = None,
-         temperature: float = 0.2, max_tokens: int = 1024,
+         temperature: float = 0.1, max_tokens: int = 1024,
          response_format: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Llamada a chat/completions; devuelve el dict raw de respuesta."""
     payload = {
         "model": model or _model('text_model'),
         "messages": messages,
-        "temperature": temperature,
+        # "temperature": temperature,
         "max_tokens": max_tokens,
     }
     if response_format:
@@ -98,8 +99,23 @@ def chat(messages: List[Dict[str, Any]], model: Optional[str] = None,
 
 
 def extract_text(resp: Dict[str, Any]) -> str:
+    """Lee `message.content`. Si vacio (modelos thinking k2.6 / k2-thinking), revisa
+    `reasoning_content` solo como ultimo recurso para intentar extraer JSON embebido.
+    """
     try:
-        return resp['choices'][0]['message']['content'] or ''
+        msg = resp['choices'][0]['message']
+        content = (msg.get('content') or '').strip()
+        if content:
+            return content
+        # fallback: thinking models a veces devuelven el JSON dentro del razonamiento
+        return (msg.get('reasoning_content') or '').strip()
+    except Exception:
+        return ''
+
+
+def _finish_reason(resp: Dict[str, Any]) -> str:
+    try:
+        return resp['choices'][0].get('finish_reason') or ''
     except Exception:
         return ''
 
@@ -124,19 +140,35 @@ def extract_json(resp: Dict[str, Any]) -> Any:
 
 
 def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]]:
-    """Envia foto a Kimi vision; espera lista [{objeto, cantidad}]."""
+    """Envia foto a Kimi vision; espera {"items":[{objeto, cantidad, unidad}]}.
+
+    Forza JSON object mode para evitar texto/markdown alrededor. Tambien acepta array
+    plano por compatibilidad si el modelo decide ignorar el wrapper.
+    """
     mime = _detect_mime(image_bytes)
     b64 = base64.b64encode(image_bytes).decode()
     sistema = (
-        "Eres un asistente de inventario. Analiza la imagen y devuelve SOLO un array JSON "
-        "con los objetos visibles agrupados por similitud. Cada elemento debe tener "
-        "{\"objeto\": string, \"cantidad\": number, \"unidad\": string opcional}. "
-        "Usa nombres genericos en espanol, en singular, en minusculas. "
-        "No incluyas texto adicional, solo el JSON."
+        "Eres un EXTRACTOR estricto de inventario a partir de una imagen. "
+        "Tu unica salida valida es un JSON con la forma exacta: "
+        "{\"items\":[{\"objeto\":string,\"cantidad\":number,\"unidad\":string|null}]}. "
+        "REGLAS OBLIGATORIAS: "
+        "(1) NO razones en voz alta ni escribas pasos, NO uses bloques markdown, "
+        "NO incluyas explicaciones ni comentarios; emite UNICAMENTE el JSON. "
+        "(2) `objeto`: nombre generico en espanol, singular, minusculas (ej. 'leche', "
+        "'huevo', 'manzana'); evita marcas, modelos o adjetivos; agrupa duplicados "
+        "del mismo producto en un solo item con la cantidad sumada. "
+        "(3) `cantidad`: numero (entero o decimal); si no estas seguro, da el conteo "
+        "minimo razonable basado en lo que se ve. "
+        "(4) `unidad`: una de pz / kg / g / l / ml / paquete / lata / caja / bolsa / "
+        "cartón; si no aplica, deja null. "
+        "(5) Si la imagen no contiene objetos identificables, responde "
+        "{\"items\":[]}. NUNCA devuelvas texto fuera del JSON."
     )
-    instruccion = "Lista los objetos visibles con su cantidad."
+    instruccion = (
+        "Genera el objeto JSON con los items visibles. Solo JSON, sin prosa."
+    )
     if hint:
-        instruccion += f" Contexto del usuario: {hint}"
+        instruccion += f" Pista del usuario: {hint}"
 
     messages = [
         {"role": "system", "content": sistema},
@@ -145,9 +177,23 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
             {"type": "text", "text": instruccion},
         ]},
     ]
-    resp = chat(messages, model=_model('vision_model'), temperature=0.1, max_tokens=1500)
+    resp = chat(
+        messages,
+        model=_model('vision_model'),
+        max_tokens=4096,
+        response_format={"type": "json_object"},
+    )
     data = extract_json(resp)
+    # Aceptar array plano como fallback
+    if isinstance(data, dict):
+        data = data.get('items') or data.get('objetos') or data.get('articulos') or []
     if not isinstance(data, list):
+        if _finish_reason(resp) == 'length':
+            raise MYE(
+                "El modelo se quedo sin tokens antes de generar el JSON. "
+                "Cambia a un modelo no-thinking (ej. moonshot-v1-32k-vision-preview "
+                "o kimi-k2.5) en /admin/ajustes."
+            )
         return []
     out = []
     for it in data:
@@ -160,10 +206,15 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
             cant = float(it.get('cantidad') or 1)
         except Exception:
             cant = 1.0
+        unidad = (it.get('unidad') or '')
+        if unidad in (None, '', 'null'):
+            unidad_norm = None
+        else:
+            unidad_norm = str(unidad).strip().lower() or None
         out.append({
             'objeto': nombre,
             'cantidad': cant,
-            'unidad': (it.get('unidad') or '').strip().lower() or None,
+            'unidad': unidad_norm,
         })
     return out
 
@@ -173,12 +224,15 @@ def sugerencias_articulo(query: str, existentes: List[str], categorias: List[str
     if not query or len(query.strip()) < 1:
         return {"sugerencias": [], "categoria_sugerida": None, "similares": []}
     sistema = (
-        "Eres un asistente de inventario domestico. Recibes un texto parcial de busqueda "
-        "y devuelves SOLO un JSON: {\"sugerencias\":[\"...\",\"...\"],"
-        "\"categoria_sugerida\":\"...\",\"similares\":[\"...\"]}. "
-        "Las sugerencias son nombres canonicos (max 5). "
-        "categoria_sugerida debe estar entre las dadas o null. "
-        "similares son items existentes que se parezcan al query."
+        "Eres un autocompletador de inventario domestico. Tu UNICA salida valida es un "
+        "JSON con la forma exacta: "
+        "{\"sugerencias\":[string,...],\"categoria_sugerida\":string|null,"
+        "\"similares\":[string,...]}. "
+        "REGLAS: (1) NO razones en voz alta, NO uses markdown ni texto fuera del JSON. "
+        "(2) `sugerencias`: max 5, nombres canonicos en espanol singular minusculas. "
+        "(3) `categoria_sugerida`: debe ser exactamente una de `categorias_disponibles` "
+        "o null si ninguna aplica. (4) `similares`: max 5 items de `items_existentes` "
+        "que se parezcan al query."
     )
     contexto = {
         "query": query,
@@ -189,7 +243,11 @@ def sugerencias_articulo(query: str, existentes: List[str], categorias: List[str
         {"role": "system", "content": sistema},
         {"role": "user", "content": json.dumps(contexto, ensure_ascii=False)},
     ]
-    resp = chat(messages, temperature=0.2, max_tokens=600)
+    resp = chat(
+        messages,
+        max_tokens=1024,
+        response_format={"type": "json_object"},
+    )
     data = extract_json(resp) or {}
     return {
         "sugerencias": [str(s).strip().lower() for s in (data.get('sugerencias') or [])][:5],
@@ -203,16 +261,24 @@ def agrupar_similares(items: List[str]) -> List[List[str]]:
     if not items:
         return []
     sistema = (
-        "Agrupa los items recibidos por similitud semantica (mismo producto/familia). "
-        "Devuelve SOLO un JSON: array de arrays de strings. Cada subarray es un grupo. "
-        "Items que no se parezcan a otros van solos."
+        "Agrupa items por similitud semantica (mismo producto/familia). Tu UNICA salida "
+        "valida es un JSON con la forma exacta: {\"grupos\":[[string,...],...]}. "
+        "REGLAS: NO razones, NO uses markdown ni prosa, solo JSON. Cada grupo es un "
+        "array de strings (los items originales). Items unicos van en un grupo de uno."
     )
     messages = [
         {"role": "system", "content": sistema},
         {"role": "user", "content": json.dumps({"items": items[:300]}, ensure_ascii=False)},
     ]
-    resp = chat(messages, temperature=0.0, max_tokens=1500)
+    resp = chat(
+        messages,
+        max_tokens=2048,
+        response_format={"type": "json_object"},
+    )
     data = extract_json(resp)
+    # aceptar tanto {"grupos":[[..]]} como [[..]]
+    if isinstance(data, dict):
+        data = data.get('grupos') or data.get('groups') or []
     if not isinstance(data, list):
         return [[i] for i in items]
     return [[str(x) for x in g] for g in data if isinstance(g, list) and g]
