@@ -1,0 +1,40 @@
+FROM python:3.13
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Mexico_City
+ENV LANG=es_MX.UTF-8
+ENV LANGUAGE=es_MX:es
+ENV LC_ALL=es_MX.UTF-8
+ENV APPINSTALL=/usr/src/app
+ENV APPHOME=/usr/src/app/app
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install -y \
+    curl git zsh neovim wget unzip cron locales tzdata supervisor htop
+
+RUN apt install git neovim curl zsh -y
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN chsh -s $(which zsh)
+
+RUN echo "es_MX.UTF-8 UTF-8" >> /etc/locale.gen && \
+    locale-gen es_MX.UTF-8 && \
+    ln -snf /usr/share/zoneinfo/America/Mexico_City /etc/localtime && \
+    echo "America/Mexico_City" > /etc/timezone && \
+    dpkg-reconfigure -f noninteractive tzdata && \
+    apt-get clean
+
+RUN mkdir /usr/src/logs
+RUN echo "" > /etc/cron.d/my_cron \
+    && chmod 0644 /etc/cron.d/my_cron
+RUN crontab /etc/cron.d/my_cron
+
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+CMD ["/usr/bin/supervisord"]
+
+WORKDIR $APPINSTALL
+COPY . $APPINSTALL
+RUN pip install -r requirements.txt
+WORKDIR $APPINSTALL
+
+# docker rm -f invhome-py && docker image rm invhome-web && docker network rm invhome-net && docker compose up -d

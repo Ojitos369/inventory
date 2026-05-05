@@ -1,0 +1,101 @@
+@use '../../../static/css/response.scss' as *;
+
+.page {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    @include md { padding: 24px; }
+}
+
+.dropZone {
+    border: 2px dashed var(--home-border-strong);
+    background: var(--home-bg-2);
+    border-radius: var(--home-r-lg);
+    padding: 28px 18px;
+    text-align: center;
+    color: var(--home-text-soft);
+    cursor: pointer;
+
+    &:hover {
+        border-color: var(--home-mint);
+        color: var(--home-mint);
+    }
+}
+
+.preview {
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    border-radius: var(--home-r-lg);
+    border: 1px solid var(--home-border);
+}
+
+.itemList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.itemRow {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    background: var(--home-bg-3);
+    border: 1px solid var(--home-border);
+    border-radius: var(--home-r-md);
+    padding: 8px;
+
+    .info {
+        .name { font-weight: 600; }
+        .meta { font-size: 0.78rem; color: var(--home-text-muted); }
+    }
+    input {
+        width: 80px;
+        text-align: right;
+    }
+    .del {
+        background: var(--home-danger-soft);
+        color: var(--home-danger);
+        border: 1px solid rgba(248,113,113,0.4);
+        border-radius: var(--home-r-pill);
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+    }
+}
+
+.modeRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    button {
+        padding: 14px;
+        border-radius: var(--home-r-md);
+        border: 1px solid var(--home-border-strong);
+        background: var(--home-bg-3);
+        color: var(--home-text);
+        cursor: pointer;
+        text-align: left;
+
+        &.active {
+            border-color: var(--home-mint);
+            background: var(--home-mint-soft);
+            color: var(--home-mint);
+        }
+
+        .t {
+            display: block;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .d {
+            font-size: 0.78rem;
+            color: var(--home-text-muted);
+        }
+    }
+}

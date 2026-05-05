@@ -1,0 +1,15 @@
+.page {
+    min-height: calc(100vh - var(--header-h));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    h1 {
+        font-family: var(--home-font-display);
+        font-size: 5rem;
+        color: var(--home-mint);
+    }
+    p { color: var(--home-text-muted); }
+}

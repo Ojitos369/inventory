@@ -1,0 +1,76 @@
+@use '../../../static/css/response.scss' as *;
+
+.page {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    @include md { padding: 24px; }
+}
+
+.head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    h2 {
+        font-family: var(--home-font-display);
+        font-weight: 700;
+        font-size: 1.6rem;
+    }
+    .meta { color: var(--home-text-muted); font-size: 0.85rem; }
+}
+
+.cantidadBig {
+    background: var(--home-bg-2);
+    border: 1px solid var(--home-border);
+    border-radius: var(--home-r-lg);
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+
+    .num {
+        font-family: var(--home-font-display);
+        font-size: 2.6rem;
+        font-weight: 700;
+    }
+    .opt {
+        font-size: 0.8rem;
+        color: var(--home-text-muted);
+    }
+    .actions {
+        display: flex;
+        gap: 8px;
+        button {
+            min-width: 48px;
+            min-height: 48px;
+            border-radius: var(--home-r-pill);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--home-border-strong);
+        }
+        .add { background: var(--home-success-soft); color: var(--home-success); border-color: rgba(52,211,153,0.4); }
+        .sub { background: var(--home-danger-soft); color: var(--home-danger); border-color: rgba(248,113,113,0.4); }
+        .adj { background: var(--home-info-soft); color: var(--home-info); border-color: rgba(96,165,250,0.4); }
+    }
+}
+
+.movs {
+    background: var(--home-bg-2);
+    border: 1px solid var(--home-border);
+    border-radius: var(--home-r-lg);
+    padding: 16px;
+    h3 { font-family: var(--home-font-display); margin-bottom: 8px; }
+    .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--home-border);
+        font-size: 0.9rem;
+        &:last-child { border-bottom: none; }
+        .meta { color: var(--home-text-muted); font-size: 0.78rem; }
+    }
+}

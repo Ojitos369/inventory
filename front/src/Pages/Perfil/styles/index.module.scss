@@ -1,0 +1,35 @@
+@use '../../../static/css/response.scss' as *;
+
+.page {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+
+    @include md { padding: 24px; }
+}
+
+.section {
+    background: var(--home-bg-2);
+    border: 1px solid var(--home-border);
+    border-radius: var(--home-r-lg);
+    padding: 18px;
+
+    h3 {
+        font-family: var(--home-font-display);
+        font-size: 1.05rem;
+        margin-bottom: 12px;
+    }
+
+    .formGroup {
+        margin-bottom: 12px;
+        label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--home-text-muted);
+            margin-bottom: 4px;
+        }
+    }
+}

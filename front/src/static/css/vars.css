@@ -1,0 +1,84 @@
+:root {
+    /* === HOME theme tokens (limpio, calmado, mobile-first) === */
+
+    /* Surfaces */
+    --home-bg-0: #0B0F14;          /* fondo */
+    --home-bg-1: #11161D;          /* superficie principal */
+    --home-bg-2: #161D26;          /* tarjetas */
+    --home-bg-3: #1D2632;          /* inputs/elev */
+    --home-bg-elev: rgba(22, 29, 38, 0.85);
+
+    /* Borders */
+    --home-border:        rgba(255, 255, 255, 0.06);
+    --home-border-strong: rgba(255, 255, 255, 0.12);
+
+    /* Text */
+    --home-text:        #ECECF6;
+    --home-text-soft:   #B8C0CC;
+    --home-text-muted:  #7A8493;
+    --home-text-dim:    #4F5867;
+
+    /* Brand: verde-mint pacifico (no neon agresivo) */
+    --home-mint:        #34D399;
+    --home-mint-2:      #6EE7B7;
+    --home-mint-3:      #10B981;
+    --home-mint-soft:   rgba(52, 211, 153, 0.16);
+    --home-mint-glow:   0 0 20px rgba(52, 211, 153, 0.30);
+
+    /* Accent secundario: cian */
+    --home-cyan:        #38BDF8;
+    --home-cyan-soft:   rgba(56, 189, 248, 0.16);
+
+    /* Status */
+    --home-success:        #34D399;
+    --home-success-soft:   rgba(52, 211, 153, 0.16);
+    --home-warning:        #F59E0B;
+    --home-warning-soft:   rgba(245, 158, 11, 0.16);
+    --home-danger:         #F87171;
+    --home-danger-soft:    rgba(248, 113, 113, 0.16);
+    --home-info:           #60A5FA;
+    --home-info-soft:      rgba(96, 165, 250, 0.16);
+
+    /* Buttons */
+    --home-btn-primary:        linear-gradient(180deg, #6EE7B7 0%, #34D399 100%);
+    --home-btn-primary-hover:  linear-gradient(180deg, #86EFC6 0%, #4DDDA8 100%);
+    --home-btn-ghost:          rgba(255, 255, 255, 0.04);
+    --home-btn-ghost-hover:    rgba(255, 255, 255, 0.08);
+    --home-btn-danger:         linear-gradient(180deg, #F87171 0%, #EF4444 100%);
+
+    /* Shadows */
+    --home-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --home-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --home-shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.55);
+    --home-shadow-mint: 0 8px 26px rgba(52, 211, 153, 0.28);
+
+    /* Radius */
+    --home-r-sm: 8px;
+    --home-r-md: 12px;
+    --home-r-lg: 16px;
+    --home-r-xl: 22px;
+    --home-r-pill: 999px;
+
+    /* Typography */
+    --home-font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --home-font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --home-font-mono:    'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Layout */
+    --bg-color:     var(--home-bg-0);
+    --side-bar-w:   max(260px, 16%);
+    --menu-bar-w:   max(260px, 16%);
+    --header-h:     56px;
+    --bottom-nav-h: 64px;
+
+    /* Aliases legacy (en caso de reusar componentes) */
+    --my-minor:     var(--home-text);
+    --my-major:     var(--home-bg-0);
+    --my-success:   var(--home-success);
+    --my-primary:   var(--home-mint);
+    --my-danger:    var(--home-danger);
+    --my-yellow:    var(--home-warning);
+    --my-secondary: #6c757d;
+    --my-dark:      var(--home-bg-2);
+    --my-light:     var(--home-text);
+}

@@ -1,0 +1,26 @@
+@use '../../../static/css/response.scss' as *;
+
+.mainPage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.body {
+    display: grid;
+    grid-template-columns: 1fr;
+
+    @include lg {
+        grid-template-columns: var(--side-bar-w) 1fr;
+    }
+}
+
+.contentContainer {
+    width: 100%;
+    min-height: calc(100vh - var(--header-h));
+    padding-bottom: calc(var(--bottom-nav-h) + 16px);
+
+    @include lg {
+        padding-bottom: 0;
+    }
+}

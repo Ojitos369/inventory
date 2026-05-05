@@ -1,0 +1,50 @@
+@use '../../../static/css/response.scss' as *;
+
+.sideBarContent {
+    display: none;
+    @include lg {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: var(--side-bar-w);
+        position: sticky;
+        top: var(--header-h);
+        height: calc(100vh - var(--header-h));
+        background: var(--home-bg-1);
+        border-right: 1px solid var(--home-border);
+        padding: 18px 12px;
+    }
+}
+
+.section {
+    margin-top: 16px;
+    padding: 0 8px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--home-text-muted);
+    font-weight: 600;
+}
+
+.link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--home-r-md);
+    color: var(--home-text-soft);
+    text-decoration: none;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.link:hover {
+    background: var(--home-btn-ghost-hover);
+    color: var(--home-text);
+}
+.link.active {
+    background: var(--home-mint-soft);
+    color: var(--home-mint);
+    border-color: rgba(52, 211, 153, 0.30);
+}
+.link .icon { font-size: 1.05rem; }

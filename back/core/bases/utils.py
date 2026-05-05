@@ -1,0 +1,62 @@
+from uuid import uuid4 as u4
+import pandas as pd
+import datetime
+from ojitos369_postgres_db.postgres_db import ConexionPostgreSQL
+from core.conf.settings import MYE, ce, prod_mode, db_data
+
+class ClassBase:
+    def create_conexion(self):
+        self.close_conexion()
+        self.conexion = ConexionPostgreSQL(db_data, ce=ce, send_error=prod_mode, parameter_indicator=":")
+        self.conexion.raise_error = True
+
+    def close_conexion(self):
+        try:
+            self.conexion.commit()
+            self.conexion.close()
+        except Exception:
+            pass
+
+    def get_id(self, hex=False, long=None):
+        id = ""
+        if hex:
+            id = str(u4().hex)[:long] if long else str(u4().hex)
+        else:
+            id = str(u4())[:long] if long else str(u4())
+        return id
+
+    def send_me_error(self, msg):
+        ce_temp = self.ce if hasattr(self, 'ce') else ce
+        error = Exception(msg)
+        ce_temp.show_error(error, send_email=True)
+
+    def d2d(self, df):
+        if not isinstance(df, (pd.DataFrame, pd.Series)):
+            return df
+        if isinstance(df, pd.DataFrame) and df.empty:
+            return []
+        clean_df = df.copy().astype(object)
+        target_replaces = {"None": None, "True": True, "False": False}
+        clean_df = clean_df.replace(target_replaces)
+        clean_df = clean_df.where(pd.notnull(clean_df), None)
+        if isinstance(df, pd.DataFrame):
+            return clean_df.to_dict(orient='records')
+        return clean_df.to_dict()
+
+    def get_date(self, fecha):
+        if (not fecha) or str(fecha).lower() in ("none", "null", "undefined", "nat"):
+            return None
+        if type(fecha) == str:
+            fecha = fecha.replace("T", " ")
+            fecha = fecha.split(".")[0]
+            if len(fecha.split(":")) == 2:
+                fecha += ":00"
+            return datetime.datetime.strptime(fecha, "%Y-%m-%d %H:%M:%S")
+        date = fecha["date"]
+        if date == "None":
+            return None
+        time = fecha["time"]
+        if len(time.split(":")) == 2:
+            time += ":00"
+        fecha = f"{date} {time}"
+        return datetime.datetime.strptime(fecha, "%Y-%m-%d %H:%M:%S")
