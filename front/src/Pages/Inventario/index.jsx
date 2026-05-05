@@ -3,6 +3,8 @@ import { useLocalStates } from './localStates';
 import { showNumber, colorPorcentaje } from '../../Core/helper';
 import { MovimientoModal } from './MovimientoModal';
 import { ArticuloFormModal } from './ArticuloFormModal';
+import { CategoriasManagerModal } from './CategoriasManagerModal';
+import { MenuBar } from '../../Components/MenuBar';
 
 export const Inventario = () => {
     const lc = useLocalStates();
@@ -33,10 +35,18 @@ export const Inventario = () => {
         f.u2('modals', 'catalog', 'formModal', true);
     };
 
+    const abrirCategorias = () => f.u2('modals', 'catalog', 'catsManager', true);
+
     return (
         <div className={style.page}>
             <div className={style.headerRow}>
                 <h2>Inventario</h2>
+                <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={abrirCategorias}
+                    style={{ minHeight: 38, padding: '0 14px', fontSize: '0.85rem' }}
+                >🗂️ Categorias</button>
             </div>
 
             <div className={style.toolbar}>
@@ -72,7 +82,14 @@ export const Inventario = () => {
                     return (
                         <div key={a.id} className={style.itemCard}>
                             <div className="row1" onClick={() => navigate(`/articulo/${a.id}`)}>
-                                <div>
+                                {a.foto_url && (
+                                    <img
+                                        src={f.general.mediaUrl(a.foto_url)}
+                                        alt=""
+                                        className="thumb"
+                                    />
+                                )}
+                                <div className="row1info">
                                     <div className="nombre">{a.nombre}</div>
                                     {a.descripcion && (
                                         <div style={{ fontSize: '0.78rem', color: 'var(--home-text-muted)', marginTop: 2 }}>
@@ -97,9 +114,29 @@ export const Inventario = () => {
                                     </div>
                                 </div>
                                 <div className="actions">
-                                    <button type="button" className="sub" onClick={() => abrirMov(a, 'descontar')} aria-label="Descontar">−</button>
-                                    <button type="button" className="add" onClick={() => abrirMov(a, 'agregar')} aria-label="Agregar">+</button>
-                                    <button type="button" onClick={() => abrirEditar(a)} aria-label="Editar">✏️</button>
+                                    <button type="button" className="sub" onClick={() => abrirMov(a, 'descontar')} aria-label="Descontar" title="Descontar">−</button>
+                                    <button type="button" className="add" onClick={() => abrirMov(a, 'agregar')} aria-label="Agregar" title="Agregar">+</button>
+                                    <MenuBar
+                                        align="right"
+                                        width={210}
+                                        trigger={(open, toggle) => (
+                                            <button
+                                                type="button"
+                                                className={`more ${open ? 'on' : ''}`}
+                                                onClick={(e) => { e.stopPropagation(); toggle(); }}
+                                                aria-label="Mas acciones"
+                                                title="Mas"
+                                            >⋯</button>
+                                        )}
+                                    >
+                                        <MenuBar.Item icon="✏️" onClick={() => abrirEditar(a)}>Editar</MenuBar.Item>
+                                        <MenuBar.Item icon="🔄" onClick={() => abrirMov(a, 'reajustar')}>Reajustar</MenuBar.Item>
+                                        <MenuBar.Item icon="🔍" onClick={() => navigate(`/articulo/${a.id}`)}>Ver detalle</MenuBar.Item>
+                                        <MenuBar.Divider />
+                                        <MenuBar.Item icon="🗑️" danger onClick={() => {
+                                            if (confirm(`Eliminar ${a.nombre}?`)) f.catalog.removeArticulo(grupoId, a.id);
+                                        }}>Eliminar</MenuBar.Item>
+                                    </MenuBar>
                                 </div>
                             </div>
                             <div className="progress">
@@ -114,6 +151,7 @@ export const Inventario = () => {
 
             <MovimientoModal />
             <ArticuloFormModal />
+            <CategoriasManagerModal grupoId={grupoId} />
         </div>
     );
 };

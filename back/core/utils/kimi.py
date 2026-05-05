@@ -2,6 +2,9 @@
 
 Endpoints usados:
 - POST {api_base}/chat/completions
+
+La configuracion runtime (api_key/base/modelos) se lee de la tabla `app_settings`
+y cae a `core.conf.settings.kimi_settings` (env) cuando no esta seteada.
 """
 import base64
 import json
@@ -11,18 +14,56 @@ from typing import List, Dict, Any, Optional
 
 import httpx
 
-from core.conf.settings import kimi_settings, MYE
+from core.conf.settings import kimi_settings as _env_kimi, MYE, db_data, ce, prod_mode
+from ojitos369_postgres_db.postgres_db import ConexionPostgreSQL
+
+
+def _runtime_settings() -> Dict[str, Any]:
+    """Lee app_settings.kimi.* y mergea sobre env. Cualquier fallo cae a env."""
+    cfg = dict(_env_kimi)
+    try:
+        conexion = ConexionPostgreSQL(db_data, ce=ce, send_error=False, parameter_indicator=":")
+        conexion.raise_error = True
+        try:
+            df = conexion.consulta_asociativa(
+                "SELECT clave, valor FROM app_settings WHERE clave LIKE 'kimi.%'"
+            )
+            try:
+                rows = df.to_dict(orient='records')
+            except Exception:
+                rows = df if isinstance(df, list) else []
+            for r in rows:
+                k = (r.get('clave') or '').split('.', 1)[-1]
+                v = r.get('valor')
+                if v:
+                    cfg[k] = v
+        finally:
+            try:
+                conexion.close()
+            except Exception:
+                pass
+    except Exception:
+        # DB no disponible — usar env
+        pass
+    return cfg
 
 
 def _client(timeout: float = 90.0) -> httpx.Client:
-    api_key = kimi_settings.get('api_key')
+    cfg = _runtime_settings()
+    api_key = cfg.get('api_key')
     if not api_key:
         raise MYE("KIMI_API_KEY no configurada")
+    base = cfg.get('api_base') or 'https://api.moonshot.ai/v1'
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
-    return httpx.Client(base_url=kimi_settings['api_base'], headers=headers, timeout=timeout)
+    return httpx.Client(base_url=base, headers=headers, timeout=timeout)
+
+
+def _model(name: str) -> str:
+    cfg = _runtime_settings()
+    return cfg.get(name) or _env_kimi.get(name) or ''
 
 
 def _detect_mime(image_bytes: bytes) -> str:
@@ -42,7 +83,7 @@ def chat(messages: List[Dict[str, Any]], model: Optional[str] = None,
          response_format: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
     """Llamada a chat/completions; devuelve el dict raw de respuesta."""
     payload = {
-        "model": model or kimi_settings['text_model'],
+        "model": model or _model('text_model'),
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
@@ -104,7 +145,7 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
             {"type": "text", "text": instruccion},
         ]},
     ]
-    resp = chat(messages, model=kimi_settings['vision_model'], temperature=0.1, max_tokens=1500)
+    resp = chat(messages, model=_model('vision_model'), temperature=0.1, max_tokens=1500)
     data = extract_json(resp)
     if not isinstance(data, list):
         return []

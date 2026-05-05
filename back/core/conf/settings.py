@@ -15,7 +15,9 @@ dev_mode = True if str(os.environ.get('RUN_DEV_MODE', False)).title() == 'True' 
 # ----------------------   CORS   ----------------------
 origins = [
     "http://localhost:8373",
+    "http://localhost:8374",
     "http://localhost:5173",
+    "http://localhost:5174",
 ]
 allow_origin_regex = r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.\d+\.\d+\.\d+|10\.\d+\.\d+\.\d+).*(:[0-9]+)?"
 allow_origins = origins
@@ -47,8 +49,8 @@ db_data = {
 kimi_settings = {
     'api_key': os.environ.get('KIMI_API_KEY', ''),
     'api_base': os.environ.get('KIMI_API_BASE', 'https://api.moonshot.ai/v1'),
-    'vision_model': os.environ.get('KIMI_VISION_MODEL', 'moonshot-v1-8k-vision-preview'),
-    'text_model': os.environ.get('KIMI_TEXT_MODEL', 'moonshot-v1-8k'),
+    'vision_model': os.environ.get('KIMI_VISION_MODEL', 'moonshot-v1-32k-vision-preview'),
+    'text_model': os.environ.get('KIMI_TEXT_MODEL', 'moonshot-v1-32k'),
 }
 
 # ----------------------   SESSION   ----------------------

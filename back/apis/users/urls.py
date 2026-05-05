@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Request
-from .api import GetMe, UpdatePerfil, ListUsers, CreateUser, UpdateUser, ResetUserPassword, DeleteUser
+from .api import (
+    GetMe, UpdatePerfil, ListUsers, CreateUser, UpdateUser,
+    ResetUserPassword, DeleteUser, GetUserGroups, SetUserGroups,
+)
 
 router = APIRouter()
 
@@ -37,3 +40,13 @@ async def reset_password(request: Request):
 @router.delete("")
 async def delete_user(request: Request):
     return await DeleteUser(request=request).run()
+
+
+@router.get("/grupos")
+async def get_user_groups(request: Request):
+    return await GetUserGroups(request=request).run()
+
+
+@router.put("/grupos")
+async def set_user_groups(request: Request):
+    return await SetUserGroups(request=request).run()

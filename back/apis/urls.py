@@ -7,6 +7,8 @@ from .catalog.urls import router as catalog_router
 from .vision.urls import router as vision_router
 from .dashboard.urls import router as dashboard_router
 from .get_media.urls import router as get_media_router
+from .uploads.urls import router as uploads_router
+from .admin_settings.urls import router as admin_settings_router
 
 apis = APIRouter()
 media = APIRouter()
@@ -19,3 +21,5 @@ apis.include_router(groups_router, prefix="/groups")
 apis.include_router(catalog_router, prefix="/catalog")
 apis.include_router(vision_router, prefix="/vision")
 apis.include_router(dashboard_router, prefix="/dashboard")
+apis.include_router(uploads_router, prefix="/uploads")
+apis.include_router(admin_settings_router, prefix="/admin/settings")

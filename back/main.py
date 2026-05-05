@@ -22,4 +22,4 @@ app.include_router(urls_router, prefix="")
 add_404_handler(app)
 
 
-# uvicorn main:app --host 0.0.0.0 --port 8377 --reload
+# uvicorn main:app --host 0.0.0.0 --port 8373 --reload

@@ -11,7 +11,7 @@ class ListCategorias(SessionApi):
             raise self.MYE("grupo_id requerido")
         self.require_grupo_member(gid)
         rs = self.d2d(self.conexion.consulta_asociativa("""
-            SELECT id, nombre, color, icono, orden
+            SELECT id, nombre, color, icono, orden, foto_url
             FROM categorias WHERE grupo_id = :gid
             ORDER BY orden, nombre
         """, {'gid': gid}))
@@ -31,18 +31,19 @@ class SaveCategoria(SessionApi):
         color = self.data.get('color')
         icono = self.data.get('icono')
         orden = int(self.data.get('orden') or 0)
+        foto = self.data.get('foto_url')
         if cat_id:
             self.conexion.ejecutar("""
-                UPDATE categorias SET nombre = :n, color = :c, icono = :i, orden = :o
+                UPDATE categorias SET nombre = :n, color = :c, icono = :i, orden = :o, foto_url = :f
                 WHERE id = :id AND grupo_id = :gid
-            """, {'n': nombre, 'c': color, 'i': icono, 'o': orden, 'id': cat_id, 'gid': gid})
+            """, {'n': nombre, 'c': color, 'i': icono, 'o': orden, 'f': foto, 'id': cat_id, 'gid': gid})
             self.response = {"id": cat_id, "message": "Categoria actualizada"}
         else:
             cat_id = self.get_id()
             self.conexion.ejecutar("""
-                INSERT INTO categorias (id, grupo_id, nombre, color, icono, orden)
-                VALUES (:id, :gid, :n, :c, :i, :o)
-            """, {'id': cat_id, 'gid': gid, 'n': nombre, 'c': color, 'i': icono, 'o': orden})
+                INSERT INTO categorias (id, grupo_id, nombre, color, icono, orden, foto_url)
+                VALUES (:id, :gid, :n, :c, :i, :o, :f)
+            """, {'id': cat_id, 'gid': gid, 'n': nombre, 'c': color, 'i': icono, 'o': orden, 'f': foto})
             self.response = {"id": cat_id, "message": "Categoria creada"}
 
 

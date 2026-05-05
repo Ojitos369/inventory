@@ -7,9 +7,9 @@ import withReactContent from 'sweetalert2-react-content';
 const MySwal = withReactContent(Swal);
 const host = window.location.hostname;
 const protocol = window.location.protocol;
-// dev: front 8373, back 8377; si esta servido por back, usa el mismo host:puerto
+// dev: front 8373, back 8373; si esta servido por back, usa el mismo host:puerto
 const port = (window.location.port === '8373' || window.location.port === '5173')
-    ? ':8377'
+    ? ':8373'
     : (window.location.port ? `:${window.location.port}` : '');
 const link = `${protocol}//${host}${port}/api/`;
 axios.defaults.withCredentials = true;
@@ -25,6 +25,7 @@ import { groups as groupsMod } from "./groups";
 import { users as usersMod } from "./users";
 import { vision as visionMod } from "./vision";
 import { dashboard as dashboardMod } from "./dashboard";
+import { adminSettings as adminSettingsMod } from "./adminSettings";
 
 const updates = () => {
     const d = useDispatch();
@@ -52,10 +53,11 @@ export const useBase = () => {
     const catalog = catalogMod({ ...bases, ...updatesVars, general });
     const vision = visionMod({ ...bases, ...updatesVars, general });
     const dashboard = dashboardMod({ ...bases, ...updatesVars, general });
+    const adminSettings = adminSettingsMod({ ...bases, ...updatesVars, general });
 
     return {
         MySwal, miAxios,
         u0, u1, u2, u3, u4, urs,
-        app, general, auth, groups, users, catalog, vision, dashboard,
+        app, general, auth, groups, users, catalog, vision, dashboard, adminSettings,
     };
 };

@@ -11,6 +11,7 @@ import { Perfil as PerfilPage } from '../Pages/Perfil';
 import { AdminUsers as AdminUsersPage } from '../Pages/Admin/Users';
 import { AdminGroups as AdminGroupsPage } from '../Pages/Admin/Groups';
 import { AdminCategorias as AdminCategoriasPage } from '../Pages/Admin/Categorias';
+import { AdminSettings as AdminSettingsPage } from '../Pages/Admin/Settings';
 import { P404 } from '../Pages/P404';
 
 import { store } from './store';
@@ -62,6 +63,7 @@ function AppUI() {
                             <Route path="admin/usuarios" element={<AdminUsersPage />} />
                             <Route path="admin/grupos" element={<AdminGroupsPage />} />
                             <Route path="admin/categorias" element={<AdminCategoriasPage />} />
+                            <Route path="admin/ajustes" element={<AdminSettingsPage />} />
                         </>
                     )}
                     <Route path="*" element={<P404 />} />

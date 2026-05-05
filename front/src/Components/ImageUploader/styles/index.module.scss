@@ -1,0 +1,88 @@
+.uploader {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 0.78rem;
+    color: var(--home-text-muted);
+    letter-spacing: 0.04em;
+}
+
+.box {
+    border: 1px dashed var(--home-border-strong);
+    border-radius: var(--home-r-md);
+    background: var(--home-bg-3);
+    overflow: hidden;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.dropzone {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--home-text-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 12px;
+    cursor: pointer;
+    font-size: 0.92rem;
+    transition: background 0.18s ease, color 0.18s ease;
+
+    &:hover { background: var(--home-btn-ghost-hover); color: var(--home-text); }
+    &:disabled { opacity: 0.6; cursor: progress; }
+
+    .icon { font-size: 1.6rem; }
+    .hint { font-size: 0.72rem; color: var(--home-text-muted); }
+}
+
+.preview {
+    position: relative;
+    width: 100%;
+    img {
+        display: block;
+        width: 100%;
+        max-height: 240px;
+        object-fit: cover;
+    }
+    .overlay {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 8px;
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+    }
+}
+
+.btn {
+    background: var(--home-btn-ghost);
+    border: 1px solid var(--home-border-strong);
+    color: var(--home-text);
+    padding: 6px 12px;
+    border-radius: var(--home-r-pill);
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: background 0.18s ease, color 0.18s ease;
+
+    &:hover { background: var(--home-btn-ghost-hover); }
+    &.danger {
+        color: var(--home-danger);
+        border-color: rgba(248,113,113,0.4);
+    }
+    &.danger:hover { background: rgba(248,113,113,0.18); }
+}
+
+.error {
+    color: var(--home-danger);
+    font-size: 0.78rem;
+}

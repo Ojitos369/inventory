@@ -133,3 +133,71 @@ class DeleteUser(SessionApi):
         self.conexion.ejecutar("UPDATE usuarios SET activo = FALSE WHERE id = :id", {'id': uid})
         self.conexion.ejecutar("DELETE FROM sessiones WHERE usuario_id = :id", {'id': uid})
         self.response = {"message": "Usuario desactivado"}
+
+
+class GetUserGroups(SessionApi):
+    def main(self):
+        self.require_admin()
+        uid = self.data.get('id')
+        if not uid:
+            raise self.MYE("id requerido")
+        rs = self.d2d(self.conexion.consulta_asociativa("""
+            SELECT g.id, g.nombre, g.icono, g.color, ug.rol
+            FROM usuarios_grupos ug
+            JOIN grupos g ON g.id = ug.grupo_id
+            WHERE ug.usuario_id = :uid AND g.activo = TRUE
+            ORDER BY g.nombre
+        """, {'uid': uid}))
+        self.response = {"grupos": rs}
+
+
+class SetUserGroups(SessionApi):
+    """Sincroniza los grupos del usuario con la lista enviada (admin global)."""
+    def main(self):
+        self.require_admin()
+        uid = self.data.get('id')
+        nuevos = self.data.get('grupos') or []  # [{grupo_id, rol}] o [grupo_id]
+        if not uid:
+            raise self.MYE("id requerido")
+
+        nuevos_norm = {}
+        for item in nuevos:
+            if isinstance(item, dict):
+                gid = item.get('grupo_id')
+                rol = item.get('rol') or 'member'
+            else:
+                gid = item
+                rol = 'member'
+            if gid:
+                nuevos_norm[gid] = rol if rol in ('admin', 'member', 'viewer') else 'member'
+
+        actuales = self.d2d(self.conexion.consulta_asociativa(
+            "SELECT grupo_id, rol FROM usuarios_grupos WHERE usuario_id = :uid",
+            {'uid': uid},
+        ))
+        actuales_map = {r['grupo_id']: r['rol'] for r in actuales}
+
+        # eliminar los que ya no estan
+        for gid in actuales_map:
+            if gid not in nuevos_norm:
+                self.conexion.ejecutar(
+                    "DELETE FROM usuarios_grupos WHERE usuario_id = :uid AND grupo_id = :gid",
+                    {'uid': uid, 'gid': gid},
+                )
+
+        # insertar o actualizar rol
+        for gid, rol in nuevos_norm.items():
+            if gid in actuales_map:
+                if actuales_map[gid] != rol:
+                    self.conexion.ejecutar("""
+                        UPDATE usuarios_grupos SET rol = :rol
+                        WHERE usuario_id = :uid AND grupo_id = :gid
+                    """, {'rol': rol, 'uid': uid, 'gid': gid})
+            else:
+                self.conexion.ejecutar("""
+                    INSERT INTO usuarios_grupos (id, usuario_id, grupo_id, rol)
+                    VALUES (:id, :uid, :gid, :rol)
+                    ON CONFLICT (usuario_id, grupo_id) DO UPDATE SET rol = EXCLUDED.rol
+                """, {'id': self.get_id(), 'uid': uid, 'gid': gid, 'rol': rol})
+
+        self.response = {"message": "Grupos actualizados"}

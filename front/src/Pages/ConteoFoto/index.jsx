@@ -83,7 +83,7 @@ export const ConteoFoto = () => {
             {preview && (
                 <>
                     <img src={preview} alt="captura" className={style.preview} />
-                    {loadingAnalyze && <p style={{ color: 'var(--home-text-muted)' }}>Analizando con Kimi…</p>}
+                    {loadingAnalyze && <p style={{ color: 'var(--home-text-muted)' }}>Analizando imagen...</p>}
 
                     {!loadingAnalyze && items.length > 0 && (
                         <>

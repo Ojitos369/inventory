@@ -31,7 +31,8 @@ a:hover { color: var(--home-mint); }
     color: var(--home-text);
 }
 
-input, textarea, select {
+input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']):not([type='file']),
+textarea, select {
     background: var(--home-bg-3);
     color: var(--home-text);
     border: 1px solid var(--home-border-strong);
@@ -43,11 +44,22 @@ input, textarea, select {
     width: 100%;
     -webkit-appearance: none;
 }
-input::placeholder, textarea::placeholder { color: var(--home-text-muted); }
-input:focus, textarea:focus, select:focus {
+input:not([type='checkbox']):not([type='radio'])::placeholder,
+textarea::placeholder { color: var(--home-text-muted); }
+input:not([type='checkbox']):not([type='radio']):focus,
+textarea:focus, select:focus {
     outline: none;
     border-color: var(--home-mint);
     box-shadow: 0 0 0 3px var(--home-mint-soft);
+}
+
+/* checkbox/radio: dejar el visual nativo accesible */
+input[type='checkbox'], input[type='radio'] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--home-mint);
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 /* botones base */

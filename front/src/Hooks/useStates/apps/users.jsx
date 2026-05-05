@@ -56,5 +56,27 @@ export const users = props => {
             .then(() => { list(); onOk?.(); });
     };
 
-    return { me, updateMe, list, create, update, resetPassword, remove };
+    const getGrupos = (id, onOk) => {
+        miAxios.get('users/grupos', { params: { id } })
+            .then(res => {
+                u2('admin', 'userGrupos', id, res.data.grupos || []);
+                onOk?.(res.data.grupos || []);
+            })
+            .catch(err => general.notificacion({
+                message: err?.response?.data?.detail || "Error", mode: "danger", title: "Error",
+            }));
+    };
+
+    const setGrupos = (id, grupos, onOk) => {
+        miAxios.put('users/grupos', { id, grupos })
+            .then(() => {
+                onOk?.();
+                general.notificacion({ message: "Grupos actualizados", mode: "success", title: "Listo" });
+            })
+            .catch(err => general.notificacion({
+                message: err?.response?.data?.detail || "Error", mode: "danger", title: "Error",
+            }));
+    };
+
+    return { me, updateMe, list, create, update, resetPassword, remove, getGrupos, setGrupos };
 };

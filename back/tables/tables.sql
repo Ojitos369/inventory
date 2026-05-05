@@ -181,3 +181,27 @@ VALUES (
     TRUE
 );
 -- Hash corresponde a la contrasena 'test'. Cambiala en produccion.
+
+
+-- ------ cambios de imagenes en categorias + ajustes globales -----
+ALTER TABLE categorias ADD COLUMN IF NOT EXISTS foto_url VARCHAR(255);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+    clave VARCHAR(80) PRIMARY KEY,
+    valor TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_by VARCHAR(36) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
+CREATE OR REPLACE FUNCTION app_settings_touch()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_app_settings_touch ON app_settings;
+CREATE TRIGGER trg_app_settings_touch
+BEFORE UPDATE ON app_settings
+FOR EACH ROW EXECUTE FUNCTION app_settings_touch();

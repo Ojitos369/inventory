@@ -38,6 +38,17 @@ export const ArticuloDetalle = () => {
         <div className={style.page}>
             <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)} style={{ alignSelf: 'flex-start' }}>← Volver</button>
             <div className={style.head}>
+                {articulo.foto_url && (
+                    <img
+                        src={f.general.mediaUrl(articulo.foto_url)}
+                        alt=""
+                        style={{
+                            width: '100%', maxHeight: 280, objectFit: 'cover',
+                            borderRadius: 'var(--home-r-lg)',
+                            marginBottom: 8,
+                        }}
+                    />
+                )}
                 <h2>{articulo.nombre}</h2>
                 <span className={style.meta}>
                     {articulo.categoria_nombre || 'Sin categoria'} · actualizado {showDate(articulo.updated_at)}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useStates } from '../../../Hooks/useStates';
 import { GeneralModal } from '../../../Components/Modals/GeneralModal';
+import { MenuBar } from '../../../Components/MenuBar';
 import style from '../styles.module.scss';
 
 
@@ -143,9 +144,17 @@ export const AdminGroups = () => {
                         {g.descripcion && <div className="meta">{g.descripcion}</div>}
                         <div className="meta">{g.miembros} miembros · {g.articulos} articulos</div>
                         <div className="actions">
-                            <button type="button" onClick={() => abrirEditar(g)}>Editar</button>
-                            <button type="button" onClick={() => abrirMiembros(g)}>Miembros</button>
-                            <button type="button" className="danger" onClick={() => eliminar(g)}>Desactivar</button>
+                            <button type="button" className="primary" onClick={() => abrirEditar(g)}>✏️ Editar</button>
+                            <button type="button" onClick={() => abrirMiembros(g)}>👥 Miembros</button>
+                            <MenuBar
+                                align="right"
+                                width={200}
+                                trigger={(open, toggle) => (
+                                    <button type="button" className={`kebab ${open ? 'primary' : ''}`} onClick={toggle} aria-label="Mas">⋯</button>
+                                )}
+                            >
+                                <MenuBar.Item icon="🚫" danger onClick={() => eliminar(g)}>Desactivar</MenuBar.Item>
+                            </MenuBar>
                         </div>
                     </div>
                 ))}

@@ -1,75 +1,113 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useStates } from '../../Hooks/useStates';
-import { GeneralModal } from '../Modals/GeneralModal';
+import { MenuBar } from '../MenuBar';
 import style from './styles/index.module.scss';
 
 
-const GroupSwitcherContent = ({ close }) => {
+const GroupSwitcher = () => {
     const { s, f, lf } = useStates();
     const grupos = useMemo(() => s.usuario?.grupos || [], [s.usuario?.grupos]);
     const grupoId = useMemo(() => s.app?.grupoActual, [s.app?.grupoActual]);
+    const grupoActualData = useMemo(() => s.app?.grupoActualData, [s.app?.grupoActualData]);
 
     const seleccionar = (g) => {
         f.u1('app', 'grupoActual', g.id);
         f.u1('app', 'grupoActualData', g);
         lf.u0('grupoActual', g.id);
-        close?.();
     };
 
-    if (!grupos.length) {
-        return <p style={{ color: 'var(--home-text-muted)' }}>No perteneces a ningun grupo. Pide a un admin que te agregue.</p>;
-    }
-
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {grupos.map(g => (
+        <MenuBar
+            align="right"
+            width={260}
+            header={<div className={style.menuTitle}>Selecciona grupo</div>}
+            trigger={(open, toggle) => (
                 <button
-                    key={g.id}
                     type="button"
-                    className={`${style.groupItem} ${g.id === grupoId ? style.selected : ''}`}
-                    onClick={() => seleccionar(g)}
+                    className={`${style.groupBtn} ${open ? style.active : ''}`}
+                    onClick={toggle}
+                    title={grupoActualData?.nombre || 'Grupo'}
                 >
-                    <span className={style.name}>{g.icono ? `${g.icono} ` : ''}{g.nombre}</span>
-                    <span className={style.meta}>Rol: {g.rol}</span>
+                    <span>{grupoActualData?.icono || '🏷️'}</span>
+                    <span className={style.groupName}>{grupoActualData?.nombre || 'Sin grupo'}</span>
+                    <span className={style.swap}>▾</span>
                 </button>
-            ))}
-        </div>
+            )}
+        >
+            {(close) => (
+                grupos.length === 0 ? (
+                    <div className={style.empty}>No perteneces a ningun grupo. Pide a un admin que te agregue.</div>
+                ) : (
+                    grupos.map(g => (
+                        <button
+                            key={g.id}
+                            type="button"
+                            className={`${style.groupItem} ${g.id === grupoId ? style.selected : ''}`}
+                            onClick={() => { seleccionar(g); close(); }}
+                        >
+                            <span className={style.gIcon}>{g.icono || '🏷️'}</span>
+                            <span className={style.gInfo}>
+                                <span className={style.gName}>{g.nombre}</span>
+                                <span className={style.gMeta}>Rol: {g.rol}</span>
+                            </span>
+                            {g.id === grupoId && <span className={style.gCheck}>✓</span>}
+                        </button>
+                    ))
+                )
+            )}
+        </MenuBar>
     );
 };
 
-const UserMenuContent = ({ close }) => {
+const UserMenu = () => {
     const { s, f } = useStates();
     const navigate = useNavigate();
     const u = s.usuario?.data || {};
     const isAdmin = !!u.is_admin;
-
-    const ir = (to) => { navigate(to); close?.(); };
+    const inicial = (u.nombre || u.username || '?')[0];
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ padding: '8px 14px', borderBottom: '1px solid var(--home-border)' }}>
-                <div style={{ fontWeight: 700 }}>{u.nombre || u.username}</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--home-text-muted)' }}>{u.email || ''}</div>
-            </div>
-            <button className={style.menuItem} onClick={() => ir('/perfil')}>👤 Mi perfil</button>
-            {isAdmin && <button className={style.menuItem} onClick={() => ir('/admin/usuarios')}>👥 Admin usuarios</button>}
-            {isAdmin && <button className={style.menuItem} onClick={() => ir('/admin/grupos')}>🏷️ Admin grupos</button>}
-            {isAdmin && <button className={style.menuItem} onClick={() => ir('/admin/categorias')}>🗂️ Admin categorias</button>}
-            <button className={`${style.menuItem} ${style.danger}`} onClick={() => { f.auth.closeSession(); close?.(); }}>
-                ⏏️ Cerrar sesion
-            </button>
-        </div>
+        <MenuBar
+            align="right"
+            width={240}
+            header={(
+                <div>
+                    <div className={style.userName}>{u.nombre || u.username}</div>
+                    {u.email && <div className={style.userEmail}>{u.email}</div>}
+                </div>
+            )}
+            trigger={(open, toggle) => (
+                <button
+                    type="button"
+                    className={`${style.userBtn} ${open ? style.active : ''}`}
+                    onClick={toggle}
+                    aria-label="Menu usuario"
+                >
+                    {inicial}
+                </button>
+            )}
+        >
+            <MenuBar.Item icon="👤" onClick={() => navigate('/perfil')}>Mi perfil</MenuBar.Item>
+            {isAdmin && (
+                <>
+                    <MenuBar.Divider />
+                    <MenuBar.Section title="Administracion">
+                        <MenuBar.Item icon="👥" onClick={() => navigate('/admin/usuarios')}>Usuarios</MenuBar.Item>
+                        <MenuBar.Item icon="🏷️" onClick={() => navigate('/admin/grupos')}>Grupos</MenuBar.Item>
+                        <MenuBar.Item icon="🗂️" onClick={() => navigate('/admin/categorias')}>Categorias</MenuBar.Item>
+                        <MenuBar.Item icon="⚙️" onClick={() => navigate('/admin/ajustes')}>Ajustes</MenuBar.Item>
+                    </MenuBar.Section>
+                </>
+            )}
+            <MenuBar.Divider />
+            <MenuBar.Item icon="⏏️" danger onClick={() => f.auth.closeSession()}>Cerrar sesion</MenuBar.Item>
+        </MenuBar>
     );
 };
 
 
 export const Header = () => {
-    const { s, f } = useStates();
-    const grupoActualData = useMemo(() => s.app?.grupoActualData, [s.app?.grupoActualData]);
-    const u = s.usuario?.data || {};
-    const inicial = (u.nombre || u.username || '?')[0];
-
     return (
         <header className={style.headerContent}>
             <Link to="/" className={style.brand} aria-label="Inicio">
@@ -77,42 +115,9 @@ export const Header = () => {
                 <span className={style.brandText}>InvHome</span>
             </Link>
             <div className={style.right}>
-                <button
-                    type="button"
-                    className={style.groupBtn}
-                    onClick={() => f.u2('modals', 'header', 'grupos', true)}
-                    title={grupoActualData?.nombre || 'Grupo'}
-                >
-                    <span>{grupoActualData?.icono || '🏷️'}</span>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {grupoActualData?.nombre || 'Sin grupo'}
-                    </span>
-                    <span className={style.swap}>▾</span>
-                </button>
-                <button
-                    type="button"
-                    className={style.userBtn}
-                    onClick={() => f.u2('modals', 'header', 'user', true)}
-                    aria-label="Menu usuario"
-                >
-                    {inicial}
-                </button>
+                <GroupSwitcher />
+                <UserMenu />
             </div>
-
-            <GeneralModal
-                lvl1="header"
-                lvl2="grupos"
-                Component={GroupSwitcherContent}
-                title="Selecciona grupo"
-                size="sm"
-            />
-            <GeneralModal
-                lvl1="header"
-                lvl2="user"
-                Component={UserMenuContent}
-                title=""
-                size="sm"
-            />
         </header>
     );
 };
