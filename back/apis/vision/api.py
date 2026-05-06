@@ -1,12 +1,14 @@
 import json
 import os
 import base64
+import time
 from datetime import datetime
 from fastapi import UploadFile, File, Form
 
 from core.bases.apis import SessionApi
 from core.conf.settings import UPLOADS_DIR
 from core.utils import llm
+from core.utils.llm import vlog
 
 
 def _ensure_uploads_dir():
@@ -17,14 +19,17 @@ class AnalyzePhoto(SessionApi):
     """Recibe imagen base64 (data.image_b64) y un grupo_id; corre Kimi y guarda captura."""
 
     def main(self):
+        t_start = time.time()
         gid = self.data.get('grupo_id')
         b64 = self.data.get('image_b64') or ''
         hint = self.data.get('hint') or ''
+        vlog('api.in', f'gid={(gid or "")[:8]} b64_chars={len(b64)} hint={hint!r}')
         if not gid:
             raise self.MYE("grupo_id requerido")
         if not b64:
             raise self.MYE("image_b64 requerido")
         self.require_grupo_member(gid)
+        vlog('api.session_ok', f'user={self.usuario.get("username")}')
 
         # Quitar prefijo data:image/...;base64,
         if ',' in b64 and b64.startswith('data:'):
@@ -33,6 +38,8 @@ class AnalyzePhoto(SessionApi):
             img_bytes = base64.b64decode(b64)
         except Exception:
             raise self.MYE("image_b64 invalido")
+        size_kb = len(img_bytes) / 1024
+        vlog('api.decoded', f'{size_kb:.0f}KB')
         if len(img_bytes) > 8 * 1024 * 1024:
             raise self.MYE("Imagen mayor a 8MB")
 
@@ -42,29 +49,39 @@ class AnalyzePhoto(SessionApi):
         fpath = os.path.join(UPLOADS_DIR, fname)
         with open(fpath, 'wb') as f:
             f.write(img_bytes)
+        vlog('api.saved', f'uploads/{fname}')
 
         try:
+            t_llm = time.time()
+            vlog('api.llm_call', 'invocando llm.vision_inventario')
             items = llm.vision_inventario(img_bytes, hint=hint)
+            vlog('api.llm_done', f'{len(items)} items en {(time.time()-t_llm):.1f}s')
         except Exception as e:
+            vlog('api.llm_error', f'{type(e).__name__}: {e}')
             print(f"Kimi vision: {e}")
             raise self.MYE(f"Error analizando imagen: {e}")
 
         # Match contra existentes para autovincular
+        t_match = time.time()
         existentes = self.d2d(self.conexion.consulta_asociativa("""
             SELECT id, nombre, nombre_normalizado, cantidad, unidad
             FROM articulos WHERE grupo_id = :gid AND activo = TRUE
         """, {'gid': gid}))
         idx = {e['nombre_normalizado']: e for e in existentes}
+        vlog('api.match', f'{len(existentes)} articulos en grupo, mapeando {len(items)} items')
 
+        matched = 0
         for it in items:
             match = idx.get(it['objeto'])
             if match:
                 it['articulo_id'] = match['id']
                 it['cantidad_actual'] = float(match['cantidad'] or 0)
                 it['unidad'] = it.get('unidad') or match.get('unidad')
+                matched += 1
             else:
                 it['articulo_id'] = None
                 it['cantidad_actual'] = 0
+        vlog('api.match_done', f'{matched}/{len(items)} matched en {(time.time()-t_match)*1000:.0f}ms')
 
         cap_id = self.get_id()
         self.conexion.ejecutar("""
@@ -75,11 +92,13 @@ class AnalyzePhoto(SessionApi):
             'fp': f"uploads/{fname}",
             'items': json.dumps(items, ensure_ascii=False),
         })
+        vlog('api.persisted', f'captura_id={cap_id[:8]}')
         self.response = {
             "captura_id": cap_id,
             "foto_path": f"/media/uploads/{fname}",
             "items": items,
         }
+        vlog('api.done', f'total {(time.time()-t_start):.1f}s, {len(items)} items')
 
 
 class AplicarCaptura(SessionApi):

@@ -3,12 +3,62 @@
 El proveedor activo se lee de `app_settings.provider.vision` y `app_settings.provider.text`,
 con fallback a `core.conf.settings.provider_defaults` (env LLM_PROVIDER_VISION / _TEXT).
 """
+import io
+import time
+from datetime import datetime
 from typing import Any, Dict, List
 
 from core.conf.settings import provider_defaults, db_data, ce
 from ojitos369_postgres_db.postgres_db import ConexionPostgreSQL
 
 from . import kimi, gemini
+
+
+def vlog(tag: str, msg: str = "") -> None:
+    """Log estandar para el flujo de vision/llm. Prefijo con timestamp y tag."""
+    ts = datetime.now().strftime('%H:%M:%S.%f')[:-3]
+    line = f"[VISION {ts}] {tag}"
+    if msg:
+        line += f" — {msg}"
+    print(line, flush=True)
+
+
+def _normalize_image(image_bytes: bytes, max_side: int = 1024, quality: int = 75) -> bytes:
+    """Reescala a `max_side` (lado mayor) y reencoda a JPEG para reducir tokens del modelo.
+
+    Si Pillow no esta disponible o falla, devuelve los bytes originales. Idempotente:
+    imagenes ya pequenas no se tocan.
+    """
+    in_kb = len(image_bytes) / 1024
+    try:
+        from PIL import Image
+    except Exception:
+        vlog('normalize', f'Pillow no disponible — paso bytes raw ({in_kb:.0f} KB)')
+        return image_bytes
+    try:
+        t0 = time.time()
+        img = Image.open(io.BytesIO(image_bytes))
+        if img.mode not in ('RGB', 'L'):
+            img = img.convert('RGB')
+        w, h = img.size
+        m = max(w, h)
+        scaled = False
+        if m > max_side:
+            ratio = max_side / m
+            img = img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+            scaled = True
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=quality, optimize=True)
+        out = buf.getvalue()
+        out_kb = len(out) / 1024
+        dt = (time.time() - t0) * 1000
+        vlog('normalize',
+             f'{w}x{h} → {img.size[0]}x{img.size[1]} '
+             f'({in_kb:.0f}KB → {out_kb:.0f}KB) scaled={scaled} en {dt:.0f}ms')
+        return out
+    except Exception as e:
+        vlog('normalize.error', f'{type(e).__name__}: {e} — paso bytes raw ({in_kb:.0f} KB)')
+        return image_bytes
 
 
 PROVIDERS = {
@@ -52,7 +102,17 @@ def _provider_for(kind: str):
 
 
 def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]]:
-    return _provider_for('vision').vision_inventario(image_bytes, hint=hint)
+    provider_name = _runtime_providers().get('vision', 'kimi')
+    vlog('dispatch', f'vision_inventario provider={provider_name} input={len(image_bytes)/1024:.0f}KB hint={hint!r}')
+    norm = _normalize_image(image_bytes, max_side=1024, quality=75)
+    t0 = time.time()
+    try:
+        items = _provider_for('vision').vision_inventario(norm, hint=hint)
+        vlog('dispatch.ok', f'{len(items)} items en {(time.time()-t0):.1f}s')
+        return items
+    except Exception as e:
+        vlog('dispatch.error', f'{type(e).__name__}: {e} (tras {(time.time()-t0):.1f}s)')
+        raise
 
 
 def sugerencias_articulo(query: str, existentes: List[str], categorias: List[str]) -> Dict[str, Any]:

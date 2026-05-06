@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useStates } from '../../Hooks/useStates';
-import { GeneralModal } from '../../Components/Modals/GeneralModal';
-import { CategoriaForm } from '../../Components/CategoriaForm';
-import { ImageUploader } from '../../Components/ImageUploader';
-import { debounce } from '../../Core/helper';
-import style from './styles/index.module.scss';
+import { useStates } from '../../../Hooks/useStates';
+import { GeneralModal } from '../../../Components/Modals/GeneralModal';
+import { CategoriaForm } from '../../../Components/CategoriaForm';
+import { ImageUploader } from '../../../Components/ImageUploader';
+import { debounce } from '../../../Core/helper';
+import style from '../styles/index.module.scss';
 
 const Content = ({ close }) => {
     const { s, f } = useStates();

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useStates } from '../../Hooks/useStates';
-import { GeneralModal } from '../../Components/Modals/GeneralModal';
-import { CategoriaForm } from '../../Components/CategoriaForm';
-import style from './styles/index.module.scss';
+import { useStates } from '../../../Hooks/useStates';
+import { GeneralModal } from '../../../Components/Modals/GeneralModal';
+import { CategoriaForm } from '../../../Components/CategoriaForm';
+import style from '../styles/index.module.scss';
 
 
 // IMPORTANTE: el Component pasado a GeneralModal debe ser una referencia estable.

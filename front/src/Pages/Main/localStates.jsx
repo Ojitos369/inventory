@@ -1,24 +1,23 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useStates } from '../../Hooks/useStates';
 import style from './style/index.module.scss';
 
 export const localStates = () => {
     const { s, lf } = useStates();
-    const grupoActual = useMemo(() => s.app?.grupoActual, [s.app?.grupoActual]);
-    const grupos = useMemo(() => s.usuario?.grupos || [], [s.usuario?.grupos]);
+    const grupoActual = s.app?.grupoActual;
+    const grupos = s.usuario?.grupos || [];
     return { style, grupoActual, grupos, lf };
 };
 
-export const useInitGrupo = () => {
+export const localEffects = () => {
     const { s, f, lf } = useStates();
     const grupos = s.usuario?.grupos || [];
     const grupoActual = s.app?.grupoActual;
 
     useEffect(() => {
         if (!grupos.length) return;
-        const guardado = localStorage.getItem('invhometka')
-            ? JSON.parse(localStorage.getItem('invhometka'))?.grupoActual
-            : null;
+        const stored = localStorage.getItem('invhometka');
+        const guardado = stored ? JSON.parse(stored)?.grupoActual : null;
         const objetivo = grupos.find(g => g.id === guardado) || grupos[0];
         if (!grupoActual && objetivo) {
             f.u1('app', 'grupoActual', objetivo.id);

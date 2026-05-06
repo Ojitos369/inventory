@@ -1,21 +1,15 @@
-import { Outlet } from 'react-router-dom';
 import { Header } from '../../Components/Header';
-import { SideBar } from '../../Components/SideBar';
 import { BottomNav } from '../../Components/BottomNav';
-import { localStates, useInitGrupo } from './localStates';
+import { Body } from './Components/Body';
+import { localStates, localEffects } from './localStates';
 
 export const Main = () => {
     const { style } = localStates();
-    useInitGrupo();
+    localEffects();
     return (
         <div className={style.mainPage}>
             <Header />
-            <div className={style.body}>
-                <SideBar />
-                <section className={style.contentContainer}>
-                    <Outlet />
-                </section>
-            </div>
+            <Body />
             <BottomNav />
         </div>
     );

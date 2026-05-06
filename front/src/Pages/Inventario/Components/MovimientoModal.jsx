@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useStates } from '../../Hooks/useStates';
-import { GeneralModal } from '../../Components/Modals/GeneralModal';
-import { showNumber } from '../../Core/helper';
+import { useStates } from '../../../Hooks/useStates';
+import { GeneralModal } from '../../../Components/Modals/GeneralModal';
+import { showNumber } from '../../../Core/helper';
 
 const Content = ({ close }) => {
     const { s, f } = useStates();

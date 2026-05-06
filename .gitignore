@@ -13,4 +13,4 @@ logs/*
 !/back/media/pages
 !/back/media/dist
 !/back/media/images
-!/back/media/uploads
+/back/media/uploads
