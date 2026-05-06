@@ -23,8 +23,12 @@ def vlog(tag: str, msg: str = "") -> None:
     print(line, flush=True)
 
 
-def _normalize_image(image_bytes: bytes, max_side: int = 1024, quality: int = 75) -> bytes:
+def normalize_image(image_bytes: bytes, max_side: int = 1024, quality: int = 75) -> bytes:
     """Reescala a `max_side` (lado mayor) y reencoda a JPEG para reducir tokens del modelo.
+
+    Publico: el caller puede normalizar primero, persistir esos bytes y luego pasarlos
+    a `vision_inventario` para que las coordenadas devueltas (bbox) refieran al mismo
+    pixel space y los crops salgan correctos.
 
     Si Pillow no esta disponible o falla, devuelve los bytes originales. Idempotente:
     imagenes ya pequenas no se tocan.
@@ -102,12 +106,14 @@ def _provider_for(kind: str):
 
 
 def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]]:
+    """Pasa la imagen al provider activo. Asume que ya viene normalizada (idealmente
+    `normalize_image` aplicada por el caller) para que las bbox sean coherentes con
+    los bytes que el caller usa para recortar."""
     provider_name = _runtime_providers().get('vision', 'kimi')
     vlog('dispatch', f'vision_inventario provider={provider_name} input={len(image_bytes)/1024:.0f}KB hint={hint!r}')
-    norm = _normalize_image(image_bytes, max_side=1024, quality=75)
     t0 = time.time()
     try:
-        items = _provider_for('vision').vision_inventario(norm, hint=hint)
+        items = _provider_for('vision').vision_inventario(image_bytes, hint=hint)
         vlog('dispatch.ok', f'{len(items)} items en {(time.time()-t0):.1f}s')
         return items
     except Exception as e:

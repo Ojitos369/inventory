@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from .api import AnalyzePhoto, AplicarCaptura, ListarCapturas
+from .api import AnalyzePhoto, AplicarCaptura, ListarCapturas, StatusCaptura
 
 router = APIRouter()
 
@@ -7,6 +7,11 @@ router = APIRouter()
 @router.post("/analyze")
 async def analyze(request: Request):
     return await AnalyzePhoto(request=request).run()
+
+
+@router.get("/status")
+async def status(request: Request):
+    return await StatusCaptura(request=request).run()
 
 
 @router.post("/aplicar")

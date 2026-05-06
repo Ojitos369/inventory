@@ -1,6 +1,7 @@
 import { localStates, localEffects } from './localStates';
 import { DropZone } from './Components/DropZone';
 import { PreviewBlock } from './Components/PreviewBlock';
+import { ZoomModal } from './Components/ZoomModal';
 
 export const ConteoFoto = () => {
     const { style, grupoId, preview } = localStates();
@@ -23,6 +24,7 @@ export const ConteoFoto = () => {
 
             {!preview && <DropZone />}
             {preview && <PreviewBlock />}
+            <ZoomModal />
         </div>
     );
 };

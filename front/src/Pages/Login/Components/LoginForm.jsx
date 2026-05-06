@@ -15,9 +15,14 @@ export const LoginForm = () => {
                     value={usuario}
                     onChange={updateUsuario}
                     autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
                     placeholder="tu usuario"
                     required
                     autoFocus
+                    style={{ textTransform: 'lowercase' }}
                 />
             </div>
             <div className={style.formGroup}>

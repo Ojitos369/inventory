@@ -10,6 +10,14 @@ export const MODES = [
     { id: 'ignorar', label: 'Ignorar', icon: '🚫', short: 'Ignora' },
 ];
 
+export const PROGRESS_LABELS = {
+    subiendo: 'Subiendo imagen…',
+    llm: 'Analizando imagen con IA…',
+    match: 'Buscando coincidencias en el inventario…',
+    crops: 'Recortando objetos detectados…',
+    done: 'Listo',
+};
+
 export const localStates = () => {
     const { s, f } = useStates();
 
@@ -17,12 +25,15 @@ export const localStates = () => {
     const captura = s.vision?.captura;
     const loadingAnalyze = !!s.loadings?.vision?.analyze;
     const loadingApply = !!s.loadings?.vision?.aplicar;
+    const progreso = captura?.progreso || null;
+    const partialItems = captura?.items || [];
 
     const [preview, setPreview] = createState(['conteoFoto', 'preview'], null);
     const [, setPreviewHash] = createState(['conteoFoto', 'previewHash'], '');
     const [hint, setHint] = createState(['conteoFoto', 'hint'], '');
     const [items, setItems] = createState(['conteoFoto', 'items'], []);
     const [dragActive, setDragActive] = createState(['conteoFoto', 'dragActive'], false);
+    const [zoomImg, setZoomImg] = createState(['conteoFoto', 'zoomImg'], null);
 
     const cameraInputRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -100,10 +111,12 @@ export const localStates = () => {
     const cancelar = () => { f.vision.clear(); reset(); };
 
     return {
-        style, MODES, f,
+        style, MODES, PROGRESS_LABELS, f,
         grupoId, captura, loadingAnalyze, loadingApply,
+        progreso, partialItems,
         preview, hint, setHint, items,
         dragActive, cameraInputRef, fileInputRef,
+        zoomImg, setZoomImg,
         onPickCam, onPickFile, onDrop, onDragOver, onDragLeave,
         updateItem, setAllModo, removeItem,
         aplicar, cancelar,

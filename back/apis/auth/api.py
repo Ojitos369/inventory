@@ -4,7 +4,7 @@ from core.utils.security import check_password, make_password
 
 class Login(ConexionApi):
     def main(self):
-        usuario = (self.data.get('usuario') or '').strip()
+        usuario = (self.data.get('usuario') or '').strip().lower()
         passwd = self.data.get('passwd') or ''
         if not usuario or not passwd:
             raise self.MYE("Usuario y contrasena son requeridos")

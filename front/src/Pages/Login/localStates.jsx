@@ -8,12 +8,12 @@ export const localStates = () => {
     const [passwd, setPasswd] = createState(['auth', 'form', 'passwd'], '');
     const loading = !!s.loadings?.auth?.login;
 
-    const updateUsuario = e => setUsuario(e.target.value);
+    const updateUsuario = e => setUsuario((e.target.value || '').toLowerCase());
     const updatePasswd = e => setPasswd(e.target.value);
 
     const handleSubmit = e => {
         e?.preventDefault?.();
-        f.auth.login((usuario || '').trim(), passwd || '');
+        f.auth.login((usuario || '').trim().toLowerCase(), passwd || '');
     };
 
     return { style, usuario, passwd, loading, updateUsuario, updatePasswd, handleSubmit };

@@ -2,12 +2,21 @@ import { localStates } from '../localStates';
 import { showNumber } from '../../../Core/helper';
 
 export const ItemCard = ({ item, idx }) => {
-    const { style, MODES, updateItem, removeItem } = localStates();
+    const { style, MODES, f, updateItem, removeItem, setZoomImg } = localStates();
     const modo = item.modo || 'reemplazar';
+    const thumb = item.foto_url ? f.general.mediaUrl(item.foto_url) : null;
 
     return (
         <div className={`${style.itemCard} ${style[`m_${modo}`]}`}>
             <div className={style.itemTop}>
+                {thumb && (
+                    <img
+                        src={thumb}
+                        alt={item.objeto || 'item'}
+                        className={style.itemThumb}
+                        onClick={() => setZoomImg(thumb)}
+                    />
+                )}
                 <input
                     className={style.objInput}
                     value={item.objeto || ''}

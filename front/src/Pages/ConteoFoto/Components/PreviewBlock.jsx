@@ -2,14 +2,21 @@ import { localStates } from '../localStates';
 import { ItemsHeader } from './ItemsHeader';
 import { ItemsList } from './ItemsList';
 import { ActionsBar } from './ActionsBar';
+import { ProgressBlock } from './ProgressBlock';
 
 export const PreviewBlock = () => {
-    const { style, preview, items, loadingAnalyze, cancelar } = localStates();
+    const { style, preview, items, loadingAnalyze, cancelar, setZoomImg } = localStates();
 
     return (
         <>
-            <img src={preview} alt="captura" className={style.preview} />
-            {loadingAnalyze && <p style={{ color: 'var(--home-text-muted)' }}>Analizando imagen...</p>}
+            <img
+                src={preview}
+                alt="captura"
+                className={style.preview}
+                onClick={() => setZoomImg(preview)}
+            />
+
+            {loadingAnalyze && <ProgressBlock />}
 
             {!loadingAnalyze && items.length > 0 && (
                 <>

@@ -181,7 +181,8 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
     sistema = (
         "Eres un EXTRACTOR estricto de inventario a partir de una imagen. "
         "Tu unica salida valida es un JSON con la forma exacta: "
-        "{\"items\":[{\"objeto\":string,\"cantidad\":number,\"unidad\":string|null}]}. "
+        "{\"items\":[{\"objeto\":string,\"cantidad\":number,\"unidad\":string|null,"
+        "\"bbox\":[number,number,number,number]}]}. "
         "REGLAS OBLIGATORIAS: "
         "(1) NO razones en voz alta ni escribas pasos, NO uses bloques markdown, "
         "NO incluyas explicaciones ni comentarios; emite UNICAMENTE el JSON. "
@@ -192,7 +193,12 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
         "minimo razonable basado en lo que se ve. "
         "(4) `unidad`: una de pz / kg / g / l / ml / paquete / lata / caja / bolsa / "
         "cartón; si no aplica, deja null. "
-        "(5) Si la imagen no contiene objetos identificables, responde "
+        "(5) `bbox`: caja delimitadora del objeto (o el cumulo de objetos del mismo "
+        "tipo) en coordenadas NORMALIZADAS [x1, y1, x2, y2] entre 0 y 1, donde (0,0) "
+        "es la esquina superior izquierda y (1,1) la inferior derecha. Sé generoso con "
+        "el margen para que se vea el objeto completo. Si no puedes ubicarlo en la "
+        "imagen, usa [0,0,1,1]. "
+        "(6) Si la imagen no contiene objetos identificables, responde "
         "{\"items\":[]}. NUNCA devuelvas texto fuera del JSON."
     )
     instruccion = (
@@ -250,13 +256,36 @@ def vision_inventario(image_bytes: bytes, hint: str = "") -> List[Dict[str, Any]
             unidad_norm = None
         else:
             unidad_norm = str(unidad).strip().lower() or None
+        bbox = _parse_bbox(it.get('bbox'))
         out.append({
             'objeto': nombre,
             'cantidad': cant,
             'unidad': unidad_norm,
+            'bbox': bbox,
         })
-    _vlog('vision.done', f'{len(out)} items extraidos')
+    _vlog('vision.done', f'{len(out)} items extraidos (con bbox: {sum(1 for o in out if o["bbox"])})')
     return out
+
+
+def _parse_bbox(raw: Any) -> Optional[List[float]]:
+    """Acepta [x1,y1,x2,y2] (float 0-1 o int 0-1000). Devuelve [x1,y1,x2,y2] en 0-1
+    o None si no se puede parsear razonablemente."""
+    if not isinstance(raw, (list, tuple)) or len(raw) != 4:
+        return None
+    try:
+        nums = [float(v) for v in raw]
+    except Exception:
+        return None
+    # Si los valores son > 1, asumir escala 0-1000 (Gemini-style) y normalizar.
+    if max(nums) > 1.5:
+        nums = [v / 1000.0 for v in nums]
+    x1, y1, x2, y2 = nums
+    # Normalizar (asegura x1<x2, y1<y2; clamp a [0,1])
+    x1, x2 = sorted((max(0.0, min(1.0, x1)), max(0.0, min(1.0, x2))))
+    y1, y2 = sorted((max(0.0, min(1.0, y1)), max(0.0, min(1.0, y2))))
+    if (x2 - x1) < 0.01 or (y2 - y1) < 0.01:
+        return None
+    return [x1, y1, x2, y2]
 
 
 def sugerencias_articulo(query: str, existentes: List[str], categorias: List[str]) -> Dict[str, Any]:

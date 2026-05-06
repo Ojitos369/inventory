@@ -205,3 +205,13 @@ DROP TRIGGER IF EXISTS trg_app_settings_touch ON app_settings;
 CREATE TRIGGER trg_app_settings_touch
 BEFORE UPDATE ON app_settings
 FOR EACH ROW EXECUTE FUNCTION app_settings_touch();
+
+
+-- ------ cambios de vision async (Cloudflare 524 fix) -----
+-- Vision se procesa en background; el endpoint responde de inmediato con captura_id
+-- y el front hace polling. Los estados validos son 'processing' | 'done' | 'error'.
+-- progreso JSONB: {stage: 'subiendo'|'llm'|'crops'|'done', current?, total?, message?}
+ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 'done';
+ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS error_msg TEXT;
+ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS progreso JSONB;
+CREATE INDEX IF NOT EXISTS idx_vision_capturas_estado ON vision_capturas(estado);
