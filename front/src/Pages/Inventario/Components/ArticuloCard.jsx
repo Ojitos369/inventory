@@ -71,7 +71,7 @@ export const ArticuloCard = ({ a }) => {
                         <MenuBar.Item icon="🔍" onClick={() => navigate(`/articulo/${a.id}`)}>Ver detalle</MenuBar.Item>
                         <MenuBar.Divider />
                         <MenuBar.Item icon="🗑️" danger onClick={() => {
-                            if (confirm(`Eliminar ${a.nombre}?`)) f.catalog.removeArticulo(grupoId, a.id);
+                            if (confirm(`Eliminar ${a.nombre}?`)) f.catalog.articulos.eliminar(grupoId, a.id);
                         }}>Eliminar</MenuBar.Item>
                     </MenuBar>
                 </div>

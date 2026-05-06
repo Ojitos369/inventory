@@ -28,7 +28,7 @@ export const localStates = () => {
     const eliminar = () => {
         if (!articulo) return;
         if (!confirm(`Eliminar "${articulo.nombre}"?`)) return;
-        f.catalog.removeArticulo(articulo.grupo_id, articulo.id);
+        f.catalog.articulos.eliminar(articulo.grupo_id, articulo.id);
         navigate('/inventario');
     };
 
@@ -44,12 +44,12 @@ export const localEffects = () => {
     const { id } = useParams();
 
     useEffect(() => {
-        if (id) f.catalog.getArticulo(id);
+        if (id) f.catalog.articulos.obtener(id);
         return () => f.u1('catalog', 'detalle', null);
     }, [id]);
 
     const formOpen = !!s.modals?.catalog?.formModal;
     useEffect(() => {
-        if (!formOpen && id) f.catalog.getArticulo(id);
+        if (!formOpen && id) f.catalog.articulos.obtener(id);
     }, [formOpen]);
 };

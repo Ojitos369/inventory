@@ -22,7 +22,7 @@ export const localStates = () => {
     };
     const eliminar = (u) => {
         if (!confirm(`Desactivar usuario ${u.username}?`)) return;
-        f.users.remove(u.id);
+        f.users.crud.eliminar(u.id);
     };
 
     return { style, f, users, abrirNuevo, abrirEditar, abrirReset, eliminar };
@@ -30,5 +30,5 @@ export const localStates = () => {
 
 export const localEffects = () => {
     const { f } = localStates();
-    useEffect(() => { f.users.list(); f.groups.list(); }, []);
+    useEffect(() => { f.users.crud.listar(); f.groups.crud.listar(); }, []);
 };

@@ -1,16 +1,12 @@
-import { cacheGet, cacheHas, cacheSet, stableKey, sha256Hex } from '../../../Core/cache';
+import { cacheGet, cacheHas, cacheSet, stableKey, sha256Hex } from '../../../../Core/cache';
 
 const POLL_INTERVAL_MS = 2500;
-const POLL_MAX_MS = 5 * 60 * 1000; // 5 min
+const POLL_MAX_MS = 5 * 60 * 1000;
 
-export const vision = props => {
+export const captura = props => {
     const { miAxios, u1, u2, general } = props;
 
-    /**
-     * Lanza analyze (responde inmediato con captura_id+estado=processing) y luego
-     * hace polling a /status hasta done|error. onOk recibe la captura completa con items.
-     */
-    const analyze = async (grupo_id, image_b64, hint, onOk) => {
+    const analizar = async (grupo_id, image_b64, hint, onOk) => {
         const imgHash = await sha256Hex(image_b64 || '');
         const key = 'vision:analyze:' + stableKey({ grupo_id, hint: hint || '', imgHash });
 
@@ -25,7 +21,6 @@ export const vision = props => {
         try {
             const res = await miAxios.post('vision/analyze', { grupo_id, image_b64, hint });
             const initial = res.data;
-            // Captura placeholder visible mientras llega el resultado
             u1("vision", "captura", initial);
             if (initial.estado === 'done') {
                 cacheSet(key, initial);
@@ -33,7 +28,6 @@ export const vision = props => {
                 u2("loadings", "vision", "analyze", false);
                 return;
             }
-            // Polling
             const captura_id = initial.captura_id;
             const t0 = Date.now();
             const tick = async () => {
@@ -65,7 +59,6 @@ export const vision = props => {
                     }
                     setTimeout(tick, POLL_INTERVAL_MS);
                 } catch (err) {
-                    // 5xx transitorio: reintenta unas pocas veces; otros: aborta
                     setTimeout(tick, POLL_INTERVAL_MS);
                 }
             };
@@ -96,7 +89,7 @@ export const vision = props => {
             .finally(() => u2("loadings", "vision", "aplicar", false));
     };
 
-    const clear = () => u1("vision", "captura", null);
+    const limpiar = () => u1("vision", "captura", null);
 
-    return { analyze, aplicar, clear };
+    return { analizar, aplicar, limpiar };
 };

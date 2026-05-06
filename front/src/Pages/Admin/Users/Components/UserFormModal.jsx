@@ -28,7 +28,7 @@ const FormContent = ({ close }) => {
         setPasswd('');
         setIsAdmin(!!editando?.is_admin);
         setActivo(editando?.activo ?? true);
-        if (editando) f.users.getGrupos(editando.id);
+        if (editando) f.users.crud.getGrupos(editando.id);
         else setGruposMap({});
     }, [editando?.id]);
 
@@ -52,11 +52,11 @@ const FormContent = ({ close }) => {
         e?.preventDefault?.();
         const seleccionados = Object.entries(gruposMap || {}).map(([grupo_id, rol]) => ({ grupo_id, rol }));
         if (editando) {
-            f.users.update({ id: editando.id, nombre, email, is_admin: isAdmin, activo }, () => {
-                f.users.setGrupos(editando.id, seleccionados, () => close?.());
+            f.users.crud.actualizar({ id: editando.id, nombre, email, is_admin: isAdmin, activo }, () => {
+                f.users.crud.setGrupos(editando.id, seleccionados, () => close?.());
             });
         } else {
-            f.users.create(
+            f.users.crud.crear(
                 { username: (username || '').trim(), passwd, nombre, email, is_admin: isAdmin, grupos: seleccionados.map(g => g.grupo_id) },
                 () => close?.(),
             );

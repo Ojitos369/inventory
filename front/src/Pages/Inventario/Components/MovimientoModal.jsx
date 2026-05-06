@@ -24,13 +24,12 @@ const Content = ({ close }) => {
         e?.preventDefault?.();
         const num = parseFloat(cantidad);
         if (isNaN(num) || num < 0) return;
-        f.catalog.movimiento(
+        f.catalog.movimientos.crear(
             { articulo_id: articulo.id, tipo, cantidad: num, comentario },
             () => {
                 close?.();
-                f.catalog.listArticulos({ grupo_id: articulo.grupo_id });
-                // refresca lista de compras tambien (si la vista esta abierta usa el dato)
-                f.catalog.listShopping({ grupo_id: articulo.grupo_id, solo_faltantes: '1' });
+                f.catalog.articulos.listar({ grupo_id: articulo.grupo_id });
+                f.catalog.shopping.listar({ grupo_id: articulo.grupo_id, solo_faltantes: '1' });
             },
         );
     };

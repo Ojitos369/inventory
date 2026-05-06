@@ -15,7 +15,7 @@ export const localStates = () => {
 
     const guardarPerfil = (e) => {
         e?.preventDefault?.();
-        f.users.updateMe({ nombre, email });
+        f.users.me.actualizar({ nombre, email });
     };
 
     const cambiarPasswd = (e) => {

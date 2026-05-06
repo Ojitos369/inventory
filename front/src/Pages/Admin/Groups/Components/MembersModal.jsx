@@ -10,8 +10,8 @@ const MembersContent = () => {
 
     useEffect(() => {
         if (!grupo) return;
-        f.groups.members(grupo.id);
-        if (!users.length) f.users.list();
+        f.groups.members.listar(grupo.id);
+        if (!users.length) f.users.crud.listar();
     }, [grupo?.id]);
 
     if (!grupo) return null;
@@ -41,7 +41,7 @@ const MembersContent = () => {
                         <div style={{ display: 'flex', gap: 6 }}>
                             <select
                                 value={m.rol}
-                                onChange={e => f.groups.addMember(grupo.id, m.id, e.target.value)}
+                                onChange={e => f.groups.members.agregar(grupo.id, m.id, e.target.value)}
                                 style={{ padding: 4, fontSize: '0.8rem', width: 'auto' }}
                             >
                                 <option value="admin">admin</option>
@@ -52,7 +52,7 @@ const MembersContent = () => {
                                 type="button"
                                 className="btn btn-ghost"
                                 style={{ minHeight: 32, padding: '2px 8px', fontSize: '0.8rem' }}
-                                onClick={() => f.groups.removeMember(grupo.id, m.id)}
+                                onClick={() => f.groups.members.eliminar(grupo.id, m.id)}
                             >×</button>
                         </div>
                     </div>
@@ -73,7 +73,7 @@ const MembersContent = () => {
                                 key={u.id}
                                 type="button"
                                 className="btn btn-ghost"
-                                onClick={() => f.groups.addMember(grupo.id, u.id, 'member')}
+                                onClick={() => f.groups.members.agregar(grupo.id, u.id, 'member')}
                                 style={{ justifyContent: 'space-between' }}
                             >
                                 <span>{u.nombre || u.username}</span>

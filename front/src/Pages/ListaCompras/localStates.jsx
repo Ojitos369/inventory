@@ -61,7 +61,7 @@ export const localStates = () => {
 export const localEffects = () => {
     const { f, grupoId, cat, minPct, soloFaltantes, incluirSinDatos } = localStates();
 
-    useEffect(() => { if (grupoId) f.catalog.listCategorias(grupoId); }, [grupoId]);
+    useEffect(() => { if (grupoId) f.catalog.categorias.listar(grupoId); }, [grupoId]);
 
     useEffect(() => {
         if (!grupoId) return;
@@ -70,6 +70,6 @@ export const localEffects = () => {
         if (minPct > 0) params.min_pct = minPct;
         if (soloFaltantes) params.solo_faltantes = '1';
         params.incluir_sin_datos = incluirSinDatos ? '1' : '0';
-        f.catalog.listShopping(params);
+        f.catalog.shopping.listar(params);
     }, [grupoId, cat, minPct, soloFaltantes, incluirSinDatos]);
 };

@@ -11,7 +11,7 @@ const ResetPwdContent = ({ close }) => {
 
     const submit = (e) => {
         e?.preventDefault?.();
-        f.users.resetPassword(target.id, nueva, () => close?.());
+        f.users.crud.resetPassword(target.id, nueva, () => close?.());
     };
     if (!target) return null;
     return (

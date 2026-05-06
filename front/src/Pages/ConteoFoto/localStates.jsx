@@ -53,7 +53,7 @@ export const localStates = () => {
         setPreview(b64);
         setPreviewHash(hash);
         if (!grupoId) return;
-        f.vision.analyze(grupoId, b64, hint, (res) => {
+        f.vision.captura.analizar(grupoId, b64, hint, (res) => {
             const conModo = (res.items || []).map(it => ({
                 ...it,
                 modo: it.articulo_id ? 'reemplazar' : 'agregar',
@@ -105,10 +105,10 @@ export const localStates = () => {
                 unidad: i.unidad || 'pz',
                 modo: i.modo || 'reemplazar',
             }));
-        f.vision.aplicar(captura.captura_id, 'reemplazar', limpios, () => reset());
+        f.vision.captura.aplicar(captura.captura_id, 'reemplazar', limpios, () => reset());
     };
 
-    const cancelar = () => { f.vision.clear(); reset(); };
+    const cancelar = () => { f.vision.captura.limpiar(); reset(); };
 
     return {
         style, MODES, PROGRESS_LABELS, f,

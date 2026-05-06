@@ -26,7 +26,7 @@ const Content = ({ close }) => {
 
     const buscarSug = useMemo(() => debounce((q) => {
         if (!q || q.length < 2) { setSugerencias({ locales: [], ia: { sugerencias: [] } }); return; }
-        f.catalog.suggest(grupoId, q, setSugerencias);
+        f.catalog.ia.sugerir(grupoId, q, setSugerencias);
     }, 400), [grupoId]);
 
     useEffect(() => {
@@ -54,7 +54,7 @@ const Content = ({ close }) => {
             unidad,
             foto_url: foto || null,
         };
-        f.catalog.saveArticulo(data, () => { f.u1('catalog', 'editArticulo', null); close?.(); });
+        f.catalog.articulos.guardar(data, () => { f.u1('catalog', 'editArticulo', null); close?.(); });
     };
 
     const todasSug = [
@@ -78,7 +78,7 @@ const Content = ({ close }) => {
                     compact
                     onSaved={(resp) => {
                         // re-listar categorias y seleccionar la nueva
-                        f.catalog.listCategorias(grupoId);
+                        f.catalog.categorias.listar(grupoId);
                         if (resp?.id) setCategoria(resp.id);
                         setCreandoCategoria(false);
                     }}
