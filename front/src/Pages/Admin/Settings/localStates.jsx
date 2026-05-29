@@ -14,14 +14,14 @@ export const localStates = () => {
     const [pText, setPText] = createState(['adminSettings', 'pText'], 'kimi');
 
     const guardarSeccion = (ns, payload, onOk) => {
-        f.adminSettings.save({ [ns]: payload }, onOk);
+        f.adminSettings.settings.guardar({ [ns]: payload }, onOk);
     };
 
     const guardarProvider = () => {
-        f.adminSettings.save({ provider: { vision: pVision, text: pText } });
+        f.adminSettings.settings.guardar({ provider: { vision: pVision, text: pText } });
     };
 
-    const probar = (kind) => f.adminSettings.test(kind);
+    const probar = (kind) => f.adminSettings.settings.probar(kind);
 
     return {
         style, f,
@@ -33,7 +33,7 @@ export const localStates = () => {
 
 export const localEffects = () => {
     const { f, provider, setPVision, setPText } = localStates();
-    useEffect(() => { f.adminSettings.fetch(); }, []);
+    useEffect(() => { f.adminSettings.settings.obtener(); }, []);
     useEffect(() => {
         setPVision(provider.vision || 'kimi');
         setPText(provider.text || 'kimi');

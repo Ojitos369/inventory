@@ -7,10 +7,13 @@ import withReactContent from 'sweetalert2-react-content';
 const MySwal = withReactContent(Swal);
 const host = window.location.hostname;
 const protocol = window.location.protocol;
-// dev: front 8373, back 8373; si esta servido por back, usa el mismo host:puerto
-const port = (window.location.port === '8373' || window.location.port === '5173')
-    ? ':8373'
-    : (window.location.port ? `:${window.location.port}` : '');
+// Puertos donde el back sirve directo (local + docker). Cualquier otro puerto
+// se asume Vite dev server -> redirige al back local 8373.
+const BACK_PORTS = ['8373', '8378'];
+const currentPort = window.location.port;
+const port = currentPort
+    ? (BACK_PORTS.includes(currentPort) ? `:${currentPort}` : ':8373')
+    : '';
 const link = `${protocol}//${host}${port}/api/`;
 axios.defaults.withCredentials = true;
 const miAxios = axios.create({ baseURL: link });

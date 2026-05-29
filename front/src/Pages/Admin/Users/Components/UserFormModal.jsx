@@ -30,7 +30,7 @@ const FormContent = ({ close }) => {
         setNuevaPasswd('');
         setIsAdmin(!!editando?.is_admin);
         setActivo(editando?.activo ?? true);
-        if (editando) f.users.getGrupos(editando.id);
+        if (editando) f.users.crud.getGrupos(editando.id);
         else setGruposMap({});
     }, [editando?.id]);
 
@@ -66,7 +66,7 @@ const FormContent = ({ close }) => {
             };
             f.users.update({ id: editando.id, nombre, email, is_admin: isAdmin, activo }, afterUpdate);
         } else {
-            f.users.create(
+            f.users.crud.crear(
                 { username: (username || '').trim(), passwd, nombre, email, is_admin: isAdmin, grupos: seleccionados.map(g => g.grupo_id) },
                 () => close?.(),
             );

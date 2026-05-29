@@ -17,7 +17,7 @@ export const localStates = () => {
     };
     const eliminar = (c) => {
         if (!confirm(`Eliminar categoria ${c.nombre}? (los articulos quedaran sin categoria)`)) return;
-        f.catalog.removeCategoria(grupoId, c.id);
+        f.catalog.categorias.eliminar(grupoId, c.id);
     };
 
     return { style, f, grupoId, categorias, abrirNuevo, abrirEditar, eliminar };
@@ -25,5 +25,5 @@ export const localStates = () => {
 
 export const localEffects = () => {
     const { f, grupoId } = localStates();
-    useEffect(() => { if (grupoId) f.catalog.listCategorias(grupoId); }, [grupoId]);
+    useEffect(() => { if (grupoId) f.catalog.categorias.listar(grupoId); }, [grupoId]);
 };

@@ -32,7 +32,7 @@ export const localStates = () => {
         if (q) params.q = q;
         if (cat) params.categoria_id = cat;
         if (bajos) params.bajos = '1';
-        f.catalog.listArticulos(params);
+        f.catalog.articulos.listar(params);
     };
 
     const abrirMov = (articulo, tipo) => {
@@ -72,8 +72,8 @@ export const localEffects = () => {
 
     useEffect(() => {
         if (!grupoId) return;
-        f.catalog.listCategorias(grupoId);
-        f.catalog.listArticulos({ grupo_id: grupoId });
+        f.catalog.categorias.listar(grupoId);
+        f.catalog.articulos.listar({ grupo_id: grupoId });
     }, [grupoId]);
 
     useEffect(() => {
@@ -83,7 +83,7 @@ export const localEffects = () => {
             if (q) params.q = q;
             if (cat) params.categoria_id = cat;
             if (bajos) params.bajos = '1';
-            f.catalog.listArticulos(params);
+            f.catalog.articulos.listar(params);
         }, 350);
         return () => clearTimeout(t);
     }, [q, cat, bajos]);

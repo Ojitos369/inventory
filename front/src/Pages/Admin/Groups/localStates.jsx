@@ -20,7 +20,7 @@ export const localStates = () => {
     };
     const eliminar = (g) => {
         if (!confirm(`Desactivar grupo ${g.nombre}?`)) return;
-        f.groups.remove(g.id);
+        f.groups.crud.eliminar(g.id);
     };
 
     return { style, f, grupos, abrirNuevo, abrirEditar, abrirMiembros, eliminar };
@@ -28,5 +28,5 @@ export const localStates = () => {
 
 export const localEffects = () => {
     const { f } = localStates();
-    useEffect(() => { f.groups.list(); }, []);
+    useEffect(() => { f.groups.crud.listar(); }, []);
 };

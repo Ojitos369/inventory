@@ -31,7 +31,7 @@ export const CategoriaForm = ({ grupoId, editando, onSaved, compact = false }) =
 
     const submit = (e) => {
         e?.preventDefault?.();
-        f.catalog.saveCategoria(
+        f.catalog.categorias.guardar(
             {
                 id: editando?.id,
                 grupo_id: grupoId,

@@ -1,1 +1,0 @@
-/home/ojitos369/Documents/Obsidian/OjosApps/Projects/invhome/AGENTS.md

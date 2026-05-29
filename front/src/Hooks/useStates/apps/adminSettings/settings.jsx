@@ -1,7 +1,7 @@
-export const adminSettings = props => {
+export const settings = props => {
     const { miAxios, u1, general } = props;
 
-    const fetch = (onOk) => {
+    const obtener = (onOk) => {
         miAxios.get('admin/settings')
             .then(res => {
                 u1('adminSettings', 'data', res.data);
@@ -13,10 +13,10 @@ export const adminSettings = props => {
             }));
     };
 
-    const save = (payload, onOk) => {
+    const guardar = (payload, onOk) => {
         miAxios.put('admin/settings', payload)
             .then(() => {
-                fetch();
+                obtener();
                 onOk?.();
                 general.notificacion({ message: 'Ajustes guardados', mode: 'success', title: 'Listo' });
             })
@@ -26,7 +26,7 @@ export const adminSettings = props => {
             }));
     };
 
-    const test = (kind, onOk) => {
+    const probar = (kind, onOk) => {
         return miAxios.post('admin/settings/test', { kind })
             .then(res => {
                 onOk?.(res.data);
@@ -48,5 +48,5 @@ export const adminSettings = props => {
             }));
     };
 
-    return { fetch, save, test };
+    return { obtener, guardar, probar };
 };

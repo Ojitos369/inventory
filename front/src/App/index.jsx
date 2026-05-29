@@ -38,7 +38,7 @@ function AppUI() {
     }, [location.pathname]);
 
     useEffect(() => {
-        if (logged) f.users.me();
+        if (logged) f.users.me.obtener();
     }, [logged]);
 
     if (!logged) {

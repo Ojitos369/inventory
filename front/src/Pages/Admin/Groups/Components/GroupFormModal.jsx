@@ -21,7 +21,7 @@ const FormContent = ({ close }) => {
 
     const submit = (e) => {
         e?.preventDefault?.();
-        f.groups.save(
+        f.groups.crud.guardar(
             { id: editando?.id, nombre: (nombre || '').trim(), descripcion, color, icono },
             () => close?.(),
         );

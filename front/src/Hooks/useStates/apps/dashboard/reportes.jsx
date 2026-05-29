@@ -1,4 +1,4 @@
-export const dashboard = props => {
+export const reportes = props => {
     const { miAxios, u1, u2 } = props;
 
     const general = (grupo_id) => {

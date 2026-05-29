@@ -20,11 +20,11 @@ const Content = ({ close }) => {
     const [editando, setEditando] = useState(null);
     const [creando, setCreando] = useState(false);
 
-    useEffect(() => { if (grupoId) f.catalog.listCategorias(grupoId); }, [grupoId]);
+    useEffect(() => { if (grupoId) f.catalog.categorias.listar(grupoId); }, [grupoId]);
 
     const eliminar = (c) => {
         if (!confirm(`Eliminar categoria "${c.nombre}"? (los articulos quedaran sin categoria)`)) return;
-        f.catalog.removeCategoria(grupoId, c.id);
+        f.catalog.categorias.eliminar(grupoId, c.id);
     };
 
     if (creando || editando) {

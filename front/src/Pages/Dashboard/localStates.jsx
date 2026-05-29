@@ -24,5 +24,5 @@ export const localStates = () => {
 
 export const localEffects = () => {
     const { f, grupoId } = localStates();
-    useEffect(() => { if (grupoId) f.dashboard.general(grupoId); }, [grupoId]);
+    useEffect(() => { if (grupoId) f.dashboard.reportes.general(grupoId); }, [grupoId]);
 };
