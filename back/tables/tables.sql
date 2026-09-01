@@ -215,3 +215,19 @@ ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS estado VARCHAR(20) DEFAULT 
 ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS error_msg TEXT;
 ALTER TABLE vision_capturas ADD COLUMN IF NOT EXISTS progreso JSONB;
 CREATE INDEX IF NOT EXISTS idx_vision_capturas_estado ON vision_capturas(estado);
+
+
+CREATE TABLE IF NOT EXISTS mcp_kardex (
+    id          VARCHAR(36)  DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+    herramienta VARCHAR(80)  NOT NULL,
+    grupo_id    VARCHAR(36),
+    articulo_id VARCHAR(36),
+    parametros  JSONB,
+    resultado   VARCHAR(10)  NOT NULL DEFAULT 'ok',
+    detalle     TEXT,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_mcp_kardex_herramienta ON mcp_kardex(herramienta);
+CREATE INDEX IF NOT EXISTS idx_mcp_kardex_fecha        ON mcp_kardex(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mcp_kardex_grupo        ON mcp_kardex(grupo_id);
+CREATE INDEX IF NOT EXISTS idx_mcp_kardex_articulo     ON mcp_kardex(articulo_id);

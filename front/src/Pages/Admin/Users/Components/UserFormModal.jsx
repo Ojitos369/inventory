@@ -17,6 +17,7 @@ const FormContent = ({ close }) => {
     const [nombre, setNombre] = createState(['admin', 'userForm', 'nombre'], '');
     const [email, setEmail] = createState(['admin', 'userForm', 'email'], '');
     const [passwd, setPasswd] = createState(['admin', 'userForm', 'passwd'], '');
+    const [nuevaPasswd, setNuevaPasswd] = createState(['admin', 'userForm', 'nuevaPasswd'], '');
     const [isAdmin, setIsAdmin] = createState(['admin', 'userForm', 'isAdmin'], false);
     const [activo, setActivo] = createState(['admin', 'userForm', 'activo'], true);
     const [gruposMap, setGruposMap] = createState(['admin', 'userForm', 'gruposMap'], {});
@@ -26,6 +27,7 @@ const FormContent = ({ close }) => {
         setNombre(editando?.nombre || '');
         setEmail(editando?.email || '');
         setPasswd('');
+        setNuevaPasswd('');
         setIsAdmin(!!editando?.is_admin);
         setActivo(editando?.activo ?? true);
         if (editando) f.users.crud.getGrupos(editando.id);
@@ -52,9 +54,17 @@ const FormContent = ({ close }) => {
         e?.preventDefault?.();
         const seleccionados = Object.entries(gruposMap || {}).map(([grupo_id, rol]) => ({ grupo_id, rol }));
         if (editando) {
-            f.users.crud.actualizar({ id: editando.id, nombre, email, is_admin: isAdmin, activo }, () => {
-                f.users.crud.setGrupos(editando.id, seleccionados, () => close?.());
-            });
+            const afterUpdate = () => {
+                const afterGrupos = () => close?.();
+                if (nuevaPasswd && nuevaPasswd.length >= 4) {
+                    f.users.resetPassword(editando.id, nuevaPasswd, () => {
+                        f.users.setGrupos(editando.id, seleccionados, afterGrupos);
+                    });
+                } else {
+                    f.users.setGrupos(editando.id, seleccionados, afterGrupos);
+                }
+            };
+            f.users.update({ id: editando.id, nombre, email, is_admin: isAdmin, activo }, afterUpdate);
         } else {
             f.users.crud.crear(
                 { username: (username || '').trim(), passwd, nombre, email, is_admin: isAdmin, grupos: seleccionados.map(g => g.grupo_id) },
@@ -73,6 +83,19 @@ const FormContent = ({ close }) => {
                 <div>
                     <label className={style.lbl}>Contrasena inicial</label>
                     <input type="password" value={passwd} onChange={e => setPasswd(e.target.value)} required />
+                </div>
+            )}
+            {editando && (
+                <div>
+                    <label className={style.lbl}>Nueva contrasena <span style={{ fontWeight: 400, opacity: 0.6 }}>(dejar vacio para no cambiar)</span></label>
+                    <input
+                        type="password"
+                        placeholder="Min. 4 caracteres"
+                        value={nuevaPasswd}
+                        onChange={e => setNuevaPasswd(e.target.value)}
+                        minLength={4}
+                        autoComplete="new-password"
+                    />
                 </div>
             )}
             <div className={style.formRow}>
