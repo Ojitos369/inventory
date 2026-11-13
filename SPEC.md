@@ -1,1 +1,1 @@
-/home/ojitos369/Documents/Obsidian/OjosApps/Projects/invhome/SPEC.md
+../../../Obsidian/Projects/OjosApps/invhome/SPEC.md
