@@ -1,6 +1,5 @@
 import os
 import re
-from ojitos369.utils import printwln as pln
 
 class Migrate:
     def replace_media(self, file):
@@ -35,23 +34,23 @@ class Migrate:
         js_files = [f for f in files if f.endswith('.js')]
 
         for file_name in js_files:
-            pln(file_name)
+            print(file_name)
             js = self.replace_media(f"{media_dir}/assets/{file_name}")
             structure = r'''https?://localhost(:\d+)?'''
             matches = re.finditer(structure, js)
             matches = sorted(matches, key=lambda x: len(x.group(0)), reverse=True)
             for match in matches:
-                pln(match.group(0))
+                print(match.group(0))
                 js = js.replace(match.group(0), '')
             with open(f'{media_dir}/assets/{file_name}', 'w') as f:
                 f.write(js)
 
         css_files = [f for f in files if f.endswith('.css')]
         for file_name in css_files:
-            pln(file_name)
+            print(file_name)
             self.replace_media(f"{media_dir}/assets/{file_name}")
 
-        pln('Done')
+        print('Done')
 
 
 if __name__ == '__main__':
